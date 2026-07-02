@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>문기동 · 물류 DX / 운영자동화 포트폴리오</title>
+<meta name="description" content="창고 운영 전 과정을 직접 웹앱·모바일앱·데이터 파이프라인으로 만든 물류 DX 실무자의 포트폴리오">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--p:#7c3aed;--p2:#5b21b6;--ink:#1c1233;--mut:#6b6580;--bg:#f6f4fb;--line:#e7e1f5}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  a{color:inherit}
+  /* hero */
+  .hero{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:64px 0 56px;position:relative;overflow:hidden}
+  .hero:after{content:"🏭";position:absolute;right:-10px;bottom:-30px;font-size:220px;opacity:.08}
+  .hero .role{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;margin-bottom:16px}
+  .hero h1{font-size:40px;font-weight:900;letter-spacing:-.5px;margin-bottom:12px}
+  .hero p{font-size:16px;opacity:.95;max-width:640px}
+  .hero .contact{margin-top:20px;font-size:14px;opacity:.9}
+  .hero .contact a{text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4)}
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:-32px auto 0;position:relative;z-index:2}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 12px;text-align:center;box-shadow:0 6px 20px rgba(90,40,160,.06)}
+  .stat b{display:block;font-size:24px;font-weight:900;color:var(--p2)}
+  .stat span{font-size:12px;color:var(--mut);font-weight:600}
+  section{padding:44px 0}
+  h2{font-size:22px;font-weight:900;margin-bottom:6px}
+  .sub{color:var(--mut);font-size:14px;margin-bottom:22px}
+  /* featured demo */
+  .feat{background:#fff;border:2px solid var(--p);border-radius:18px;padding:24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;box-shadow:0 8px 28px rgba(124,58,237,.12)}
+  .feat .ico{font-size:44px}
+  .feat .body{flex:1;min-width:220px}
+  .feat h3{font-size:19px;font-weight:900;margin-bottom:4px}
+  .feat p{font-size:14px;color:var(--mut)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(45deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;font-weight:800;font-size:15px;padding:14px 22px;border-radius:12px;box-shadow:0 4px 14px rgba(124,58,237,.3);white-space:nowrap}
+  .btn.ghost{background:#fff;color:var(--p2);border:1.5px solid var(--line);box-shadow:none}
+  .demo-note{font-size:12px;color:var(--mut);margin-top:8px}
+  /* stack */
+  .tags{display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600}
+  .tag b{color:var(--p2)}
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+  .card .top{display:flex;align-items:center;gap:10px}
+  .card .top .e{font-size:26px}
+  .card h3{font-size:16px;font-weight:900}
+  .card .live{margin-left:auto;font-size:11px;font-weight:800;color:#0f6e56;background:#e6f7f1;border:1px solid #b8e6d6;border-radius:999px;padding:3px 9px}
+  .card p{font-size:13.5px;color:#453b5e}
+  .card .st{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  .card .st span{font-size:11px;color:var(--mut);background:var(--bg);border-radius:6px;padding:3px 8px;font-weight:600}
+  .card .links{margin-top:auto;display:flex;gap:8px;padding-top:6px}
+  .card .links a{font-size:13px;font-weight:800;text-decoration:none;color:var(--p2)}
+  .card .links a.demo{color:#fff;background:var(--p);padding:6px 12px;border-radius:8px}
+  footer{padding:36px 0 60px;color:var(--mut);font-size:13px;text-align:center;border-top:1px solid var(--line)}
+  @media(max-width:680px){.hero h1{font-size:30px}.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="role">물류 DX · 운영자동화</span>
+    <h1>현장을 아는 사람이 만든<br>창고 운영 시스템</h1>
+    <p>창고 운영 현업에서 출발해 <b>입고검수 · 피킹 · 재고이동 · 보충 · B2B출고 · 용차</b>까지 창고 운영 전 과정을 직접 웹앱 · 모바일앱 · 데이터 파이프라인으로 만들고 <b>3개 센터에 배포</b>했습니다. 기획–설계–구현–배포–운영을 1인 풀사이클로.</p>
+    <div class="contact">📧 <a href="mailto:이메일@example.com">이메일 채우기</a> &nbsp;·&nbsp; 🔗 <a href="https://github.com/kdmoon-eng" target="_blank" rel="noopener">github.com/kdmoon-eng</a></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><b>6</b><span>GitHub 저장소</span></div>
+    <div class="stat"><b>~240</b><span>커밋 (약 2개월)</span></div>
+    <div class="stat"><b>5+</b><span>라이브 배포</span></div>
+    <div class="stat"><b>3</b><span>센터 현업 운영</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section>
+    <h2>🖐 직접 만져보세요</h2>
+    <div class="sub">대표작인 B2B 출고 PDA를 실제 화면 그대로 체험할 수 있습니다.</div>
+    <div class="feat">
+      <div class="ico">📦</div>
+      <div class="body">
+        <h3>B2B 출고 PDA — 라이브 데모</h3>
+        <p>센터 로그인 · 동시작업 엔진 · 파레트/박스 담기 · 라벨 · 관리자 대시보드까지 실제 앱 UI를 그대로. 고객사 <b>오리무역 · 너구리상사</b> → 출고건 선택 → 담기 흐름을 눌러보세요.</p>
+        <div class="demo-note">🧪 백엔드 없이 <b>가짜 데이터</b>로만 동작합니다 — 실제 회사 데이터는 전혀 사용되지 않습니다.</div>
+      </div>
+      <a class="btn" href="b2b-pda.html">데모 열기 →</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>🛠 기술 스택</h2>
+    <div class="sub">현업 페인포인트를 제품으로 만든 도구들.</div>
+    <div class="tags">
+      <span class="tag"><b>프론트</b> React(TS)·recharts · 바닐라 JS PWA</span>
+      <span class="tag"><b>모바일</b> React Native · 블루투스(SPP)·CPCL</span>
+      <span class="tag"><b>백엔드/DB</b> Supabase(Postgres·RLS·RPC) · Node/Express</span>
+      <span class="tag"><b>데이터</b> BigQuery · ETL · Python 자동화</span>
+      <span class="tag"><b>인프라</b> Vercel · Cloud Run · GitHub</span>
+      <span class="tag"><b>연동</b> Slack · Logispot(TMS) · QR/바코드</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>📂 프로젝트</h2>
+    <div class="sub">대부분 현업 운영 중. 일부 저장소는 회사 자산이라 비공개입니다.</div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="top"><span class="e">📦</span><h3>B2B 출고 PDA</h3><span class="live">운영 중</span></div>
+        <p>DB advisory lock 기반 <b>동시작업 엔진</b>(박스번호 원자 배정·멱등), <b>RLS 센터격리</b>, 파레트/박스 담기, QR 패킹내역, 관리자 대시보드·감사로그.</p>
+        <div class="st"><span>바닐라 JS PWA</span><span>Supabase</span><span>Vercel</span><span>125+ 커밋</span></div>
+        <div class="links"><a class="demo" href="b2b-pda.html">🖐 데모</a></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">📊</span><h3>OB 출고 대시보드</h3><span class="live">운영 중</span></div>
+        <p>출고 RAW → <b>BigQuery</b>(주간 sync) → <b>Cloud Run API</b> → React 대시보드. KPI·차트, 부자재 발주 인사이트.</p>
+        <div class="st"><span>React(TS)</span><span>recharts</span><span>BigQuery</span><span>Cloud Run</span></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">🔄</span><h3>입고검수·재고이동·보충 PDA</h3><span class="live">운영 중</span></div>
+        <p>Apps Script+시트의 <b>공용 IP CAPTCHA·1000행 한계</b>를 진단하고 Supabase+Vercel로 전면 이전(3종). 로케이션 체계·분할적치·분할 RPC.</p>
+        <div class="st"><span>Supabase</span><span>PWA</span><span>Vercel</span><span>58+ 커밋</span></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">📱</span><h3>SewooLabel 라벨앱</h3></div>
+        <p>블루투스 <b>SPP</b>로 산업용 라벨프린터에 <b>CPCL 직접 전송</b>, QR/바코드 생성, 입출고 빌드 분리, PDA에 ADB 배포.</p>
+        <div class="st"><span>React Native</span><span>Bluetooth SPP</span><span>CPCL</span></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">🧮</span><h3>창고 자동화 엔진</h3></div>
+        <p><b>총량피킹 지시서 알고리즘</b>(보관&gt;B2C 우선순위·제외규칙), 입고검수지·보충계획·피킹분석·출고내역서(CBM) 자동화. GAS 11개.</p>
+        <div class="st"><span>Python</span><span>Apps Script</span><span>알고리즘</span></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">🧊</span><h3>감곡센터 3D WMS 도면</h3></div>
+        <p><b>Three.js</b>로 창고 레이아웃/로케이션 3D 시각화 프로토타입(4카메라 모드).</p>
+        <div class="st"><span>Three.js</span><span>WebGL</span></div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    🧪 이 사이트의 앱 데모는 <b>가짜 데이터</b>로 동작하며 실제 회사 데이터를 포함하지 않습니다.<br>
+    © 문기동 · 물류 DX / 운영자동화 · <a href="https://github.com/kdmoon-eng" style="color:var(--p2)">github.com/kdmoon-eng</a>
+  </div>
+</footer>
+
+</body>
+</html>
