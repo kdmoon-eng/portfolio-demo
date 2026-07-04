@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>입고검수·적치 PDA — 데모 · 문기동</title>
+<meta name="description" content="입고검수·적치 PDA 데모 — 스캔→검수(요청 vs 실제)→적치(존행-베이-단-셀)→사진. 가짜 데이터.">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--g:#16a34a;--g2:#15803d;--teal:#0d9488;--amber:#d97706;--red:#dc2626;
+    --ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--bg:#eef1f4;--card:#fff;--soft:#f6f8fa}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:inherit}
+  .demobar{background:linear-gradient(90deg,#16a34a,#0d9488);color:#fff;font-size:13px;text-align:center;padding:8px 14px}
+  .demobar b{font-weight:800}.demobar a{color:#fff;text-decoration:underline;font-weight:700}
+  .stage{display:flex;justify-content:center;padding:22px 12px 40px}
+  /* phone */
+  .phone{width:100%;max-width:400px;background:var(--card);border-radius:26px;overflow:hidden;
+    box-shadow:0 18px 50px rgba(20,40,30,.22);border:1px solid #dfe4ea;display:flex;flex-direction:column;min-height:720px}
+  .app-top{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;padding:16px 18px 14px}
+  .app-top .t{font-size:16px;font-weight:900;display:flex;align-items:center;gap:8px}
+  .app-top .meta{display:flex;gap:8px;margin-top:10px;font-size:11.5px;flex-wrap:wrap}
+  .app-top .m{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px 10px;font-weight:700}
+  .prog{height:5px;background:rgba(255,255,255,.25);border-radius:9px;margin-top:12px;overflow:hidden}
+  .prog i{display:block;height:100%;background:#fff;border-radius:9px;transition:width .4s}
+  .body{flex:1;padding:14px;overflow:auto}
+  .scan{display:flex;gap:8px;margin-bottom:12px}
+  .scan input{flex:1;font-family:inherit;font-size:14px;padding:11px 13px;border:1.5px solid var(--line);border-radius:11px}
+  .scan input:focus{outline:none;border-color:var(--g)}
+  .scan button{background:var(--g);color:#fff;border:none;border-radius:11px;padding:0 15px;font-weight:800;font-size:18px;font-family:inherit}
+  .sect{font-size:12px;font-weight:800;color:var(--mut);margin:4px 2px 8px;display:flex;justify-content:space-between}
+  .item{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:9px;cursor:pointer;transition:.12s}
+  .item:active{transform:scale(.985)}
+  .item.done{opacity:.55}
+  .item .r1{display:flex;align-items:center;gap:7px}
+  .item .cust{font-size:11px;font-weight:800;color:var(--teal);background:#ccfbf1;border-radius:6px;padding:2px 7px}
+  .item .st{margin-left:auto;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px}
+  .st.wait{background:#fef9c3;color:#854d0e}.st.ok{background:#dcfce7;color:#166534}
+  .item .nm{font-size:14px;font-weight:800;margin:6px 0 2px}
+  .item .sub{font-size:11.5px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap}
+  .item .sub b{color:#374151}
+  /* detail */
+  .card2{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:12px}
+  .kv{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px dashed #e5e7eb}
+  .kv:last-child{border:none}.kv .k{color:var(--mut);font-weight:600}.kv .v{font-weight:800}
+  .qtybox{display:flex;align-items:center;gap:10px;justify-content:center;margin:8px 0}
+  .qtybox button{width:46px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:24px;font-weight:800;font-family:inherit}
+  .qtybox .num{font-size:34px;font-weight:900;min-width:80px;text-align:center}
+  .judge{text-align:center;font-size:13px;font-weight:800;padding:9px;border-radius:11px;margin-bottom:12px}
+  .judge.ok{background:#dcfce7;color:#166534}.judge.short{background:#fef3c7;color:#92400e}.judge.over{background:#fee2e2;color:#991b1b}
+  .locgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
+  .loc{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 6px;text-align:center;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer}
+  .loc.on{border-color:var(--g);background:#f0fdf4;color:var(--g2)}
+  .loc small{display:block;font-size:9.5px;color:var(--mut);font-weight:600;margin-top:2px}
+  .photo{border:2px dashed #cbd5e1;border-radius:13px;padding:22px;text-align:center;color:var(--mut);font-size:13px;margin:8px 0 12px;cursor:pointer}
+  .photo.taken{border-style:solid;border-color:var(--g);background:#f0fdf4;color:var(--g2);font-weight:700}
+  .btn{width:100%;background:var(--g);color:#fff;border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer}
+  .btn:disabled{background:#cbd5e1}
+  .btn.ghost{background:#fff;color:var(--mut);border:1.5px solid var(--line);margin-bottom:9px}
+  .toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);background:#111827;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:999px;opacity:0;transition:.3s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .footnote{text-align:center;font-size:11.5px;color:var(--mut);padding:14px 20px 4px}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="demobar">🧪 <b>데모</b> — 백엔드 없이 <b>가짜 데이터</b>로 동작. 실제 회사 데이터·키 없음 · <a href="index.html">← 포트폴리오로</a></div>
+
+<div class="stage">
+  <div class="phone">
+    <div class="app-top">
+      <div class="t">📥 입고검수·적치 PDA</div>
+      <div class="meta">
+        <span class="m">🏢 이천375센터</span>
+        <span class="m">👤 데모작업자</span>
+        <span class="m" id="doneMeta">완료 0/6</span>
+      </div>
+      <div class="prog"><i id="prog" style="width:0%"></i></div>
+    </div>
+    <div class="body" id="body"><!-- rendered --></div>
+    <div class="footnote">🧪 가짜 데이터로 동작하는 데모입니다 · 원본: 바닐라 JS PWA · Supabase(RLS·RPC) · Vercel</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== 가짜 입고 데이터 (실제 아님) ===== */
+const ITEMS=[
+  {id:1,cust:'오리무역',  nm:'미니 텀블러 350ml',   bc:'8801234500017',plt:'PLT-2606-011',req:120},
+  {id:2,cust:'너구리상사',nm:'캔버스 에코백 M',     bc:'8801234500024',plt:'PLT-2606-012',req:200},
+  {id:3,cust:'판다물산',  nm:'세라믹 머그 2P',       bc:'8801234500031',plt:'PLT-2606-013',req:96},
+  {id:4,cust:'오리무역',  nm:'우드 코스터 4P세트',   bc:'8801234500048',plt:'PLT-2606-014',req:150},
+  {id:5,cust:'코알라유통',nm:'스테인리스 보틀 500',  bc:'8801234500055',plt:'PLT-2606-015',req:80},
+  {id:6,cust:'너구리상사',nm:'린넨 앞치마',          bc:'8801234500062',plt:'PLT-2606-016',req:60},
+];
+const LOCS=['A01-03-2-05','A02-01-1-03','B01-05-3-02','B02-02-2-07','C01-04-1-06','C03-06-2-01'];
+const state={}; ITEMS.forEach(it=>state[it.id]={done:false});
+let cur=null, actual=0, pickedLoc=null, photo=false;
+
+const $=id=>document.getElementById(id);
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+function doneCount(){return ITEMS.filter(i=>state[i.id].done).length;}
+function updHeader(){const d=doneCount();$('doneMeta').textContent=`완료 ${d}/${ITEMS.length}`;$('prog').style.width=(d/ITEMS.length*100)+'%';}
+
+/* 목록 화면 */
+function renderList(){
+  cur=null;
+  const rows=ITEMS.map(it=>{const dn=state[it.id].done;return `
+    <div class="item ${dn?'done':''}" onclick="openItem(${it.id})">
+      <div class="r1"><span class="cust">${it.cust}</span>
+        <span class="st ${dn?'ok':'wait'}">${dn?'✔ 적치완료':'검수대기'}</span></div>
+      <div class="nm">${it.nm}</div>
+      <div class="sub"><span>🏷 <b>${it.bc}</b></span><span>📦 ${it.plt}</span><span>요청 <b>${it.req}</b></span></div>
+    </div>`;}).join('');
+  $('body').innerHTML=`
+    <div class="scan"><input id="scanIn" placeholder="바코드 / QR / PLT.NO 스캔" onkeydown="if(event.key==='Enter')doScan()">
+      <button onclick="doScan()">⊙</button></div>
+    <div class="sect"><span>검수 대기 목록</span><span>${ITEMS.length-doneCount()}건 남음</span></div>
+    ${rows}`;
+}
+function doScan(){
+  const v=($('scanIn').value||'').trim();
+  const hit=ITEMS.find(it=>!state[it.id].done)||ITEMS[0];
+  toast(v?`스캔: ${v}`:'스캔 시뮬레이션');
+  openItem(hit.id);
+}
+
+/* 검수 화면 */
+function openItem(id){
+  cur=ITEMS.find(i=>i.id===id); actual=cur.req; // 기본=요청수량
+  renderInspect();
+}
+function renderInspect(){
+  const it=cur;
+  $('body').innerHTML=`
+    <button class="btn ghost" onclick="renderList()">← 목록</button>
+    <div class="sect"><span>① 품목 검수</span><span>${it.cust}</span></div>
+    <div class="card2">
+      <div class="kv"><span class="k">SKU명</span><span class="v">${it.nm}</span></div>
+      <div class="kv"><span class="k">바코드</span><span class="v">${it.bc}</span></div>
+      <div class="kv"><span class="k">PLT.NO</span><span class="v">${it.plt}</span></div>
+      <div class="kv"><span class="k">요청 수량</span><span class="v">${it.req}</span></div>
+    </div>
+    <div class="sect"><span>실제 검수 수량</span></div>
+    <div class="qtybox">
+      <button onclick="chgQty(-1)">−</button>
+      <span class="num" id="qn">${actual}</span>
+      <button onclick="chgQty(1)">＋</button>
+    </div>
+    <div id="judge"></div>
+    <button class="btn" onclick="toPlace()">적치 진행 →</button>`;
+  renderJudge();
+}
+function chgQty(d){actual=Math.max(0,actual+d);$('qn').textContent=actual;renderJudge();}
+function renderJudge(){
+  const diff=actual-cur.req; let cls,txt;
+  if(diff===0){cls='ok';txt='✅ 수량 일치 (요청 '+cur.req+' = 실제 '+actual+')';}
+  else if(diff<0){cls='short';txt='⚠️ 부족 '+Math.abs(diff)+' (요청 '+cur.req+' → 실제 '+actual+')';}
+  else{cls='over';txt='❗ 과다 +'+diff+' (요청 '+cur.req+' → 실제 '+actual+')';}
+  $('judge').innerHTML=`<div class="judge ${cls}">${txt}</div>`;
+}
+
+/* 적치 화면 */
+function toPlace(){pickedLoc=null;photo=false;renderPlace();}
+function renderPlace(){
+  const it=cur;
+  $('body').innerHTML=`
+    <button class="btn ghost" onclick="renderInspect()">← 검수</button>
+    <div class="sect"><span>② 적치 (존행-베이-단-셀)</span><span>실제 ${actual}</span></div>
+    <div class="card2"><div class="kv"><span class="k">${it.nm}</span><span class="v">${actual}개</span></div></div>
+    <div class="sect"><span>추천 로케이션 선택</span></div>
+    <div class="locgrid" id="locg">${LOCS.map((l,i)=>`<button class="loc" onclick="pickLoc(${i})">${l.split('-').slice(0,2).join('-')}<small>${l}</small></button>`).join('')}</div>
+    <div class="sect"><span>적치 사진 (누락검사)</span></div>
+    <div class="photo" id="ph" onclick="takePhoto()">📷 탭하여 적치 사진 촬영</div>
+    <button class="btn" id="doneBtn" disabled onclick="finish()">적치 완료</button>`;
+}
+function pickLoc(i){pickedLoc=LOCS[i];document.querySelectorAll('#locg .loc').forEach((b,k)=>b.classList.toggle('on',k===i));checkDone();}
+function takePhoto(){photo=true;$('ph').classList.add('taken');$('ph').textContent='✔ 적치 사진 촬영됨 (데모)';checkDone();}
+function checkDone(){$('doneBtn').disabled=!(pickedLoc&&photo);}
+function finish(){
+  state[cur.id].done=true; updHeader();
+  toast('✔ '+cur.nm+' → '+pickedLoc+' 적치완료');
+  renderList();
+}
+
+/* init */
+updHeader(); renderList();
+</script>
+</body>
+</html>

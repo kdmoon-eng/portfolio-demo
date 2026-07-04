@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>재고보충 PDA — 데모 · 문기동</title>
+<meta name="description" content="감곡 재고보충 PDA 데모 — 선보충 계산→보충 목록(존/유형 필터)→PLT·수량 확인→보충 실행. 가짜 데이터.">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--teal:#0d9488;--teal2:#0f766e;--amber:#d97706;--red:#dc2626;--green:#16a34a;
+    --ink:#1f2430;--mut:#6b7280;--line:#e5e7ef;--bg:#eef1f4;--card:#fff;--soft:#f2f3f7}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  a{color:inherit}
+  .demobar{background:linear-gradient(90deg,#0d9488,#d97706);color:#fff;font-size:13px;text-align:center;padding:8px 14px}
+  .demobar b{font-weight:800}.demobar a{color:#fff;text-decoration:underline;font-weight:700}
+  .stage{display:flex;justify-content:center;padding:22px 12px 40px}
+  .phone{width:100%;max-width:400px;background:var(--card);border-radius:26px;overflow:hidden;
+    box-shadow:0 18px 50px rgba(15,40,40,.22);border:1px solid #dfe4ea;display:flex;flex-direction:column;min-height:720px}
+  .app-top{background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;padding:16px 18px 14px}
+  .app-top .t{font-size:16px;font-weight:900;display:flex;align-items:center;gap:8px}
+  .app-top .meta{display:flex;gap:8px;margin-top:10px;font-size:11.5px;flex-wrap:wrap}
+  .app-top .m{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px 10px;font-weight:700}
+  .stats{display:flex;gap:8px;margin-top:12px}
+  .stat{flex:1;background:rgba(255,255,255,.14);border-radius:11px;padding:9px 6px;text-align:center}
+  .stat b{display:block;font-size:19px;font-weight:900}.stat span{font-size:10.5px;opacity:.9}
+  .body{flex:1;padding:14px;overflow:auto}
+  .scan{display:flex;gap:8px;margin-bottom:10px}
+  .scan input{flex:1;font-family:inherit;font-size:14px;padding:11px 13px;border:1.5px solid var(--line);border-radius:11px}
+  .scan input:focus{outline:none;border-color:var(--teal)}
+  .scan button{background:var(--teal);color:#fff;border:none;border-radius:11px;padding:0 15px;font-weight:800;font-size:18px;font-family:inherit}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px}
+  .chip{white-space:nowrap;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--mut);cursor:pointer}
+  .chip.on{background:#ccfbf1;border-color:#5eead4;color:var(--teal2)}
+  .sect{font-size:12px;font-weight:800;color:var(--mut);margin:2px 2px 8px;display:flex;justify-content:space-between}
+  .item{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:9px;cursor:pointer;transition:.12s;display:flex;align-items:center;gap:10px}
+  .item:active{transform:scale(.985)}.item.done{opacity:.5}
+  .item .loc{font-size:12.5px;font-weight:900;color:var(--teal2);background:#ccfbf1;border-radius:8px;padding:7px 8px;text-align:center;min-width:64px;line-height:1.25}
+  .item .loc small{display:block;font-size:9px;color:var(--mut);font-weight:700}
+  .item .info{flex:1;min-width:0}
+  .item .nm{font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .sub{font-size:11px;color:var(--mut);display:flex;gap:8px;margin-top:2px}
+  .item .need{text-align:right}
+  .item .need b{font-size:20px;font-weight:900;color:var(--amber)}
+  .item .need span{display:block;font-size:9.5px;color:var(--mut);font-weight:700}
+  .plt{display:inline-block;font-size:9.5px;font-weight:900;color:#fff;background:var(--amber);border-radius:5px;padding:1px 5px;margin-left:4px}
+  .card2{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:12px}
+  .kv{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px dashed #e5e7ef}
+  .kv:last-child{border:none}.kv .k{color:var(--mut);font-weight:600}.kv .v{font-weight:800}
+  .bignum{text-align:center;padding:14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:13px;margin-bottom:12px}
+  .bignum b{font-size:40px;font-weight:900;color:var(--amber);display:block;line-height:1}
+  .bignum span{font-size:12px;color:#9a6a1f;font-weight:700}
+  .judge{text-align:center;font-size:13px;font-weight:800;padding:9px;border-radius:11px;margin-bottom:12px;background:#dcfce7;color:#166534}
+  .btn{width:100%;background:var(--teal);color:#fff;border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer}
+  .btn.amber{background:var(--amber)}
+  .btn.ghost{background:#fff;color:var(--mut);border:1.5px solid var(--line);margin-bottom:9px}
+  .toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);background:#111827;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:999px;opacity:0;transition:.3s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .empty{text-align:center;color:var(--mut);font-size:13px;padding:40px 10px}
+  .footnote{text-align:center;font-size:11.5px;color:var(--mut);padding:14px 20px 4px}
+</style>
+</head>
+<body>
+<div class="demobar">🧪 <b>데모</b> — 백엔드 없이 <b>가짜 데이터</b>로 동작. 실제 회사 데이터·키 없음 · <a href="index.html">← 포트폴리오로</a></div>
+
+<div class="stage">
+  <div class="phone">
+    <div class="app-top">
+      <div class="t">📦 재고보충 PDA</div>
+      <div class="meta"><span class="m">🏢 감곡센터</span><span class="m">👤 데모작업자</span></div>
+      <div class="stats">
+        <div class="stat"><b id="stTodo">0</b><span>보충 대상</span></div>
+        <div class="stat"><b id="stDone">0</b><span>보충 완료</span></div>
+        <div class="stat"><b id="stQty">0</b><span>보충 수량</span></div>
+      </div>
+    </div>
+    <div class="body" id="body"></div>
+    <div class="footnote">🧪 가짜 데이터로 동작하는 데모입니다 · 원본: 바닐라 JS PWA · Supabase · Vercel · 선보충 자동계산</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== 가짜 보충 데이터 (선보충: 출고량 대비 박스입수·최소1박스, 실제 아님) ===== */
+const TASKS=[
+  {id:1,zone:'D06',loc:'D06-03-1-02',nm:'미니 텀블러 350ml',  bc:'8801234500017',stock:6, box:24,need:48},
+  {id:2,zone:'D06',loc:'D06-05-1-01',nm:'캔버스 에코백 M',    bc:'8801234500024',stock:12,box:50,need:100},
+  {id:3,zone:'D07',loc:'D07-01-1-03',nm:'세라믹 머그 2P',      bc:'8801234500031',stock:3, box:12,need:24},
+  {id:4,zone:'D07',loc:'D07-04-1-02',nm:'우드 코스터 4P세트',  bc:'8801234500048',stock:0, box:20,need:60},
+  {id:5,zone:'D07',loc:'D07-06-1-01',nm:'스테인리스 보틀 500', bc:'8801234500055',stock:8, box:16,need:16},
+  {id:6,zone:'D08',loc:'D08-02-1-04',nm:'린넨 앞치마',         bc:'8801234500062',stock:5, box:10,need:20},
+  {id:7,zone:'D08',loc:'D08-03-1-02',nm:'대나무 도마',         bc:'8801234500079',stock:2, box:8, need:8},
+  {id:8,zone:'D08',loc:'D08-05-1-03',nm:'아로마 캔들 세트',    bc:'8801234500086',stock:9, box:24,need:48},
+];
+// PLT 판정: 보충량이 박스입수×2 이상이면 PLT 단위 보충
+TASKS.forEach(t=>t.plt = t.need >= t.box*2);
+const state={}; TASKS.forEach(t=>state[t.id]={done:false});
+let curZone='전체', cur=null;
+
+const $=id=>document.getElementById(id);
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+function stats(){
+  const todo=TASKS.filter(t=>!state[t.id].done).length;
+  const done=TASKS.filter(t=>state[t.id].done).length;
+  const qty=TASKS.filter(t=>state[t.id].done).reduce((a,t)=>a+t.need,0);
+  $('stTodo').textContent=todo;$('stDone').textContent=done;$('stQty').textContent=qty.toLocaleString('en-US');
+}
+const ZONES=['전체','D06','D07','D08'];
+
+/* 목록 */
+function renderList(){
+  cur=null; stats();
+  const list=TASKS.filter(t=>(curZone==='전체'||t.zone===curZone));
+  const rows=list.map(t=>{const dn=state[t.id].done;return `
+    <div class="item ${dn?'done':''}" onclick="openTask(${t.id})">
+      <div class="loc">${t.loc.split('-').slice(0,2).join('-')}<small>${t.loc.split('-').slice(2).join('-')}단</small></div>
+      <div class="info">
+        <div class="nm">${t.nm}${t.plt?'<span class="plt">PLT</span>':''}</div>
+        <div class="sub"><span>🏷 ${t.bc}</span><span>현재고 ${t.stock}</span></div>
+      </div>
+      <div class="need">${dn?'<b style="color:#16a34a;font-size:22px">✔</b>':`<b>${t.need}</b><span>보충</span>`}</div>
+    </div>`;}).join('') || `<div class="empty">이 존에 보충 대상이 없습니다.</div>`;
+  $('body').innerHTML=`
+    <div class="scan"><input id="scanIn" placeholder="로케이션 / 바코드 스캔" onkeydown="if(event.key==='Enter')doScan()">
+      <button onclick="doScan()">⊙</button></div>
+    <div class="chips">${ZONES.map(z=>`<span class="chip ${z===curZone?'on':''}" onclick="setZone('${z}')">${z==='전체'?'전체 존':z}</span>`).join('')}</div>
+    <div class="sect"><span>보충 작업 목록 (선보충 자동계산)</span><span>${list.filter(t=>!state[t.id].done).length}건</span></div>
+    ${rows}`;
+}
+function setZone(z){curZone=z;renderList();}
+function doScan(){
+  const v=($('scanIn').value||'').trim();
+  const hit=TASKS.find(t=>!state[t.id].done && (curZone==='전체'||t.zone===curZone))||TASKS[0];
+  toast(v?`스캔: ${v}`:'스캔 시뮬레이션'); openTask(hit.id);
+}
+
+/* 보충 확정 */
+function openTask(id){cur=TASKS.find(t=>t.id===id);renderConfirm();}
+function renderConfirm(){
+  const t=cur, boxes=Math.round(t.need/t.box*10)/10;
+  $('body').innerHTML=`
+    <button class="btn ghost" onclick="renderList()">← 목록</button>
+    <div class="sect"><span>보충 확정</span><span>${t.zone} 존</span></div>
+    <div class="card2">
+      <div class="kv"><span class="k">로케이션 (1단 피킹)</span><span class="v">${t.loc}</span></div>
+      <div class="kv"><span class="k">SKU명</span><span class="v">${t.nm}</span></div>
+      <div class="kv"><span class="k">바코드</span><span class="v">${t.bc}</span></div>
+      <div class="kv"><span class="k">현재고</span><span class="v">${t.stock}</span></div>
+      <div class="kv"><span class="k">박스 입수</span><span class="v">${t.box} / 박스</span></div>
+      <div class="kv"><span class="k">보충 단위</span><span class="v">${t.plt?'📦 PLT 단위':'낱박스'}</span></div>
+    </div>
+    <div class="bignum"><b>${t.need}</b><span>보충 수량 (= ${boxes}박스${t.plt?' · PLT':''})</span></div>
+    <div class="judge">✅ 스캔 일치 · 보충 위치 확인됨 (${t.loc})</div>
+    <button class="btn amber" onclick="finish()">📦 보충 실행</button>`;
+}
+function finish(){
+  state[cur.id].done=true;
+  toast('✔ '+cur.loc+' · '+cur.nm+' 보충완료 (+'+cur.need+')');
+  renderList();
+}
+
+/* init */
+renderList();
+</script>
+</body>
+</html>
