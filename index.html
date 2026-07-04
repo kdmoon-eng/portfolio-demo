@@ -12,7 +12,10 @@
   .wrap{max-width:960px;margin:0 auto;padding:0 20px}
   a{color:inherit}
   /* hero */
-  .hero{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:64px 0 56px;position:relative;overflow:hidden}
+  .hero{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:24px 0 56px;position:relative;overflow:hidden}
+  .lang{text-align:right;font-size:13px;font-weight:700;margin-bottom:26px;position:relative;z-index:2}
+  .lang a{color:#fff;text-decoration:none;opacity:.7}
+  .lang a.on{opacity:1;border-bottom:2px solid #fff}
   .hero:after{content:"🏭";position:absolute;right:-10px;bottom:-30px;font-size:220px;opacity:.08}
   .hero .role{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;margin-bottom:16px}
   .hero h1{font-size:40px;font-weight:900;letter-spacing:-.5px;margin-bottom:12px}
@@ -61,6 +64,7 @@
 
 <div class="hero">
   <div class="wrap">
+    <div class="lang"><a href="index.html" class="on">한국어</a> &nbsp;·&nbsp; <a href="index-en.html">EN</a></div>
     <span class="role">물류 DX · 운영자동화</span>
     <h1>현장을 아는 사람이 만든<br>창고 운영 시스템</h1>
     <p>창고 운영 현업에서 출발해 <b>입고검수 · 피킹 · 재고이동 · 보충 · B2B출고 · 용차</b>까지 창고 운영 전 과정을 직접 웹앱 · 모바일앱 · 데이터 파이프라인으로 만들고 <b>3개 센터에 배포</b>했습니다. 기획–설계–구현–배포–운영을 1인 풀사이클로.</p>

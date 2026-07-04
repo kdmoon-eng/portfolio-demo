@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ki-dong Moon · Logistics DX / Operations Automation Portfolio</title>
+<meta name="description" content="Portfolio of a logistics DX practitioner who built the full warehouse workflow as web apps, mobile apps, and data pipelines.">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--p:#7c3aed;--p2:#5b21b6;--ink:#1c1233;--mut:#6b6580;--bg:#f6f4fb;--line:#e7e1f5}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  a{color:inherit}
+  .hero{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:24px 0 56px;position:relative;overflow:hidden}
+  .hero:after{content:"🏭";position:absolute;right:-10px;bottom:-30px;font-size:220px;opacity:.08}
+  .lang{text-align:right;font-size:13px;font-weight:700;margin-bottom:26px;position:relative;z-index:2}
+  .lang a{color:#fff;text-decoration:none;opacity:.7}
+  .lang a.on{opacity:1;border-bottom:2px solid #fff}
+  .hero .role{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 14px;font-size:13px;font-weight:700;margin-bottom:16px}
+  .hero h1{font-size:40px;font-weight:900;letter-spacing:-.5px;margin-bottom:12px}
+  .hero p{font-size:16px;opacity:.95;max-width:660px}
+  .hero .contact{margin-top:20px;font-size:14px;opacity:.9}
+  .hero .contact a{text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:-32px auto 0;position:relative;z-index:2}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 12px;text-align:center;box-shadow:0 6px 20px rgba(90,40,160,.06)}
+  .stat b{display:block;font-size:24px;font-weight:900;color:var(--p2)}
+  .stat span{font-size:12px;color:var(--mut);font-weight:600}
+  section{padding:44px 0}
+  h2{font-size:22px;font-weight:900;margin-bottom:6px}
+  .sub{color:var(--mut);font-size:14px;margin-bottom:22px}
+  .feat{background:#fff;border:2px solid var(--p);border-radius:18px;padding:24px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;box-shadow:0 8px 28px rgba(124,58,237,.12)}
+  .feat .ico{font-size:44px}
+  .feat .body{flex:1;min-width:220px}
+  .feat h3{font-size:19px;font-weight:900;margin-bottom:4px}
+  .feat p{font-size:14px;color:var(--mut)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(45deg,#7c3aed,#6d28d9);color:#fff;text-decoration:none;font-weight:800;font-size:15px;padding:14px 22px;border-radius:12px;box-shadow:0 4px 14px rgba(124,58,237,.3);white-space:nowrap}
+  .demo-note{font-size:12px;color:var(--mut);margin-top:8px}
+  .konote{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:13px;font-weight:600;border-radius:12px;padding:11px 14px;margin-bottom:16px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px}
+  .tag{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600}
+  .tag b{color:var(--p2)}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+  .card .top{display:flex;align-items:center;gap:10px}
+  .card .top .e{font-size:26px}
+  .card h3{font-size:16px;font-weight:900}
+  .card .live{margin-left:auto;font-size:11px;font-weight:800;color:#0f6e56;background:#e6f7f1;border:1px solid #b8e6d6;border-radius:999px;padding:3px 9px}
+  .card p{font-size:13.5px;color:#453b5e}
+  .card .st{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  .card .st span{font-size:11px;color:var(--mut);background:var(--bg);border-radius:6px;padding:3px 8px;font-weight:600}
+  .card .links{margin-top:auto;display:flex;gap:8px;padding-top:6px}
+  .card .links a.demo{color:#fff;background:var(--p);padding:6px 12px;border-radius:8px;font-size:13px;font-weight:800;text-decoration:none}
+  footer{padding:36px 0 60px;color:var(--mut);font-size:13px;text-align:center;border-top:1px solid var(--line)}
+  @media(max-width:680px){.hero h1{font-size:30px}.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="lang"><a href="index.html">한국어</a> &nbsp;·&nbsp; <a href="index-en.html" class="on">EN</a></div>
+    <span class="role">Logistics DX · Operations Automation</span>
+    <h1>Warehouse systems built<br>by someone who knows the floor</h1>
+    <p>Starting from the warehouse operations floor, I built the entire workflow — <b>inbound inspection · picking · stock transfer · replenishment · B2B outbound · line-haul</b> — into web apps, mobile apps, and data pipelines, and <b>deployed them across 3 fulfillment centers</b>. Planning–design–build–deploy–operate, full cycle, solo.</p>
+    <div class="contact">📧 <a href="mailto:moongidong12@gmail.com">moongidong12@gmail.com</a> &nbsp;·&nbsp; 🔗 <a href="https://github.com/kdmoon-eng" target="_blank" rel="noopener">github.com/kdmoon-eng</a> &nbsp;·&nbsp; 💼 <a href="https://www.linkedin.com/in/ki-dong-moon-9111ba21b/" target="_blank" rel="noopener">LinkedIn</a></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><b>6</b><span>GitHub repositories</span></div>
+    <div class="stat"><b>~240</b><span>commits (~2 months)</span></div>
+    <div class="stat"><b>5+</b><span>live deployments</span></div>
+    <div class="stat"><b>3</b><span>centers in production</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section>
+    <div class="sub">Try <b>5 flagship projects</b> exactly as they run in production. (Works on mock data — no backend.)</div>
+    <div class="konote">ℹ️ These are the <b>actual production tools</b>, so the in-app screens are in Korean. Descriptions below explain each one in English.</div>
+    <div class="feat">
+      <div class="ico">📦</div>
+      <div class="body">
+        <h3>B2B Outbound PDA — Live Demo</h3>
+        <p>Center login · concurrent-work engine · pallet/box picking · label printing · admin dashboard — the real app UI. Try: pick a sample client → select an order → walk through the picking flow.</p>
+        <div class="demo-note">🧪 Runs on <b>mock data</b> only — no real company data is used.</div>
+      </div>
+      <a class="btn" href="b2b-pda.html">Open demo →</a>
+    </div>
+    <div class="feat" style="margin-top:14px">
+      <div class="ico">📊</div>
+      <div class="body">
+        <h3>OB Outbound Analytics Dashboard — Live Demo</h3>
+        <p>BigQuery → Cloud Run → React dashboard. 6 KPIs · daily outbound trend · volume by client · courier share · delivery type · consolidation rate. Try the Dashboard / Clients / Orders / SKU tabs.</p>
+        <div class="demo-note">🧪 <b>The real app (React · recharts)</b> · runs on mock client data.</div>
+      </div>
+      <a class="btn" href="ob/">Open demo →</a>
+    </div>
+    <div class="feat" style="margin-top:14px">
+      <div class="ico">📥</div>
+      <div class="body">
+        <h3>IB Inbound & Staffing Dashboard — Live Demo</h3>
+        <p>Workforce <b>Plan (Forecast) vs Actual</b> · accuracy · inbound/B2B/processing scores · <b>on-time-leave calendar</b>. Try the Staffing / Monthly / Work tabs.</p>
+        <div class="demo-note">🧪 <b>The real app (React · recharts)</b> · runs on mock workforce/score data.</div>
+      </div>
+      <a class="btn" href="ib/">Open demo →</a>
+    </div>
+    <div class="feat" style="margin-top:14px">
+      <div class="ico">🔄</div>
+      <div class="body">
+        <h3>Inbound Inspection PDA · Replenishment PDA — Live Demo</h3>
+        <p>Actual mobile PDA screens. <b>Inbound</b>: scan → inspect (requested vs actual) → put-away (zone-bay-level-cell) + photo. <b>Replenishment</b>: pre-replenish list → confirm PLT/qty → execute.</p>
+        <div class="demo-note">🧪 Interactive mobile demos running on mock data.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a class="btn" href="inbound-pda.html">Inbound →</a>
+        <a class="btn" href="replenish-pda.html">Replenishment →</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>🛠 Tech Stack</h2>
+    <div class="sub">Tools built from real operational pain points.</div>
+    <div class="tags">
+      <span class="tag"><b>Frontend</b> React(TS)·recharts · vanilla JS PWA</span>
+      <span class="tag"><b>Mobile</b> React Native · Bluetooth(SPP)·CPCL</span>
+      <span class="tag"><b>Backend/DB</b> Supabase(Postgres·RLS·RPC) · Node/Express</span>
+      <span class="tag"><b>Data</b> BigQuery · ETL · Python automation</span>
+      <span class="tag"><b>Infra</b> Vercel · Cloud Run · GitHub</span>
+      <span class="tag"><b>Integrations</b> Slack · Logispot(TMS) · QR/barcode</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>📂 Projects</h2>
+    <div class="sub">Most are in production. Some repositories are private (company assets).</div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="top"><span class="e">📦</span><h3>B2B Outbound PDA</h3><span class="live">In production</span></div>
+        <p>DB advisory-lock <b>concurrent-work engine</b> (atomic box-number assignment, idempotent), <b>RLS center isolation</b>, pallet/box picking, QR packing lists, admin dashboard & audit log.</p>
+        <div class="st"><span>vanilla JS PWA</span><span>Supabase</span><span>Vercel</span><span>125+ commits</span></div>
+        <div class="links"><a class="demo" href="b2b-pda.html">🖐 Demo</a></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">📊</span><h3>OB Outbound Dashboard</h3><span class="live">In production</span></div>
+        <p>Outbound RAW → <b>BigQuery</b> (weekly sync) → <b>Cloud Run API</b> → React dashboard. KPIs·charts, supplies-ordering insights.</p>
+        <div class="st"><span>React(TS)</span><span>recharts</span><span>BigQuery</span><span>Cloud Run</span></div>
+        <div class="links"><a class="demo" href="ob/">🖐 Demo</a></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">📥</span><h3>IB Inbound & Staffing Dashboard</h3><span class="live">In production</span></div>
+        <p>Staffing <b>plan vs actual</b> · accuracy · inbound/B2B/processing scores · <b>on-time-leave calendar</b>. Google Sheets → CSV/Apps Script → React dashboard.</p>
+        <div class="st"><span>React(TS)</span><span>recharts</span><span>Google Sheets</span><span>Vercel</span></div>
+        <div class="links"><a class="demo" href="ib/">🖐 Demo</a></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">🔄</span><h3>Inbound · Transfer · Replenishment PDAs</h3><span class="live">In production</span></div>
+        <p>Diagnosed shared-IP CAPTCHA & 1,000-row query limits of Apps Script + Sheets, and fully migrated to Supabase + Vercel (3 apps). New location scheme, split put-away, split RPCs.</p>
+        <div class="st"><span>Supabase</span><span>PWA</span><span>Vercel</span><span>58+ commits</span></div>
+        <div class="links"><a class="demo" href="inbound-pda.html">🖐 Inbound</a><a class="demo" href="replenish-pda.html">🖐 Replenish</a></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">📱</span><h3>SewooLabel Printer App</h3></div>
+        <p>Direct <b>CPCL transmission</b> to an industrial label printer over Bluetooth <b>SPP</b>, QR/barcode generation, split inbound/outbound builds, ADB deployment.</p>
+        <div class="st"><span>React Native</span><span>Bluetooth SPP</span><span>CPCL</span></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">🧮</span><h3>Warehouse Automation Engine</h3></div>
+        <p><b>Batch-picking instruction algorithm</b> (storage &gt; B2C priority · exclusion rules), auto inbound checklists · replenishment plans · picking analysis · outbound statements (CBM). 11 Apps Script projects.</p>
+        <div class="st"><span>Python</span><span>Apps Script</span><span>Algorithms</span></div>
+      </div>
+
+      <div class="card">
+        <div class="top"><span class="e">🧊</span><h3>Gamgok 3D WMS Layout</h3></div>
+        <p><b>Three.js</b> prototype for 3D warehouse layout/location visualization (4 camera modes).</p>
+        <div class="st"><span>Three.js</span><span>WebGL</span></div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    🧪 The app demos on this site run on <b>mock data</b> and contain no real company data.<br>
+    © Ki-dong Moon · Logistics DX / Operations Automation · <a href="https://github.com/kdmoon-eng" style="color:var(--p2)">github.com/kdmoon-eng</a>
+  </div>
+</footer>
+
+</body>
+</html>

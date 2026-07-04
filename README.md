@@ -1,7 +1,8 @@
 # 문기동 · 물류 DX 포트폴리오 데모
 
 ## 🔗 공개 링크 (면접자에게 이 주소를 공유하세요)
-- 랜딩: **https://kdmoon-eng.github.io/portfolio-demo/**
+- 랜딩(한국어): **https://kdmoon-eng.github.io/portfolio-demo/**
+- 랜딩(English): **https://kdmoon-eng.github.io/portfolio-demo/index-en.html**
 - B2B 출고 PDA 데모: **https://kdmoon-eng.github.io/portfolio-demo/b2b-pda.html**
 - OB 출고 분석 대시보드 데모: **https://kdmoon-eng.github.io/portfolio-demo/ob/index.html**
 - IB 입고·스태핑 대시보드 데모: **https://kdmoon-eng.github.io/portfolio-demo/ib/index.html**
