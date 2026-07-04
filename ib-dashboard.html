@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IB 입고·스태핑 분석 대시보드 — 데모 · 문기동</title>
+<meta name="description" content="스태핑(인력 계획 vs 실제)·입고/B2B/임가공 점수·정시퇴근 분석 대시보드 데모 (가짜 데이터).">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --blue:#3b82f6;--blue2:#2563eb;--pink:#ec4899;--purple:#8b5cf6;--amber:#f59e0b;
+    --green:#10b981;--red:#ef4444;
+    --ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--bg:#f3f4f6;--card:#fff;--soft:#f9fafb;
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 18px}
+  a{color:inherit}
+  .demobar{background:linear-gradient(90deg,#2563eb,#7c3aed);color:#fff;font-size:13px;text-align:center;padding:8px 14px}
+  .demobar b{font-weight:800}.demobar a{color:#fff;text-decoration:underline;font-weight:700}
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  .htop{display:flex;align-items:center;gap:14px;padding:14px 0;flex-wrap:wrap}
+  .htop .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#2563eb);
+    display:grid;place-items:center;font-size:20px;flex-shrink:0}
+  .htop h1{font-size:18px;font-weight:900;letter-spacing:-.3px}
+  .htop .sub{font-size:12px;color:var(--mut)}
+  .htop .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pill{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:700;display:inline-flex;gap:6px;align-items:center}
+  .pill.badge{background:#eff6ff;border-color:#bfdbfe;color:var(--blue2)}
+  .tabs{display:flex;gap:2px;border-top:1px solid var(--line);overflow-x:auto}
+  .tab{padding:12px 18px;font-size:14px;font-weight:700;color:var(--mut);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+  .tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+  .filters{display:flex;gap:8px;align-items:center;padding:14px 0 2px;flex-wrap:wrap}
+  .filters select{font-family:inherit;font-size:13px;font-weight:600;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink)}
+  .muted{color:var(--mut)}
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px;display:flex;gap:12px;align-items:center}
+  .kpi .ic{font-size:23px}
+  .kpi .v{font-size:22px;font-weight:900;letter-spacing:-.5px;line-height:1.1}
+  .kpi .l{font-size:12px;color:var(--mut);font-weight:600}
+  .kpi .d{font-size:11px;font-weight:800;margin-top:2px}
+  .kpi .d.up{color:var(--green)}.kpi .d.dn{color:var(--red)}.kpi .d.n{color:var(--mut)}
+  .row{display:grid;gap:14px;margin-bottom:14px}
+  .row.c2{grid-template-columns:1.3fr 1fr}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .panel h3{font-size:14.5px;font-weight:800;margin-bottom:2px}
+  .panel .ps{font-size:12px;color:var(--mut);margin-bottom:12px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+  .legend .lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);font-weight:600}
+  .legend .sw{width:11px;height:11px;border-radius:3px}
+  svg{display:block;width:100%;height:auto}svg text{font-family:inherit}
+  .seg:hover,.bar:hover{opacity:.82;cursor:default}
+  /* calendar */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal .h{font-size:11px;font-weight:800;color:var(--mut);text-align:center;padding-bottom:2px}
+  .cal .cell{aspect-ratio:1/.82;border-radius:8px;display:flex;flex-direction:column;justify-content:space-between;padding:6px 7px;font-size:11px;font-weight:700;border:1px solid transparent}
+  .cal .num{opacity:.7;font-size:10px}
+  .cal .on{background:#d1fae5;color:#065f46;border-color:#a7f3d0}
+  .cal .late{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+  .cal .we{background:#f3f4f6;color:#9ca3af}
+  .cal .empty{border:1px dashed #e5e7eb;background:#fff}
+  .cal .ico{font-size:14px;text-align:right}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:11.5px;color:var(--mut);font-weight:800;background:var(--soft)}
+  td.name{font-weight:700}
+  .tag2{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px}
+  .twrap-scroll{overflow-x:auto}
+  .hide{display:none}
+  footer{padding:26px 0 46px;color:var(--mut);font-size:12.5px;text-align:center}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}.row.c2{grid-template-columns:1fr}}
+  @media(max-width:560px){.kpis{grid-template-columns:repeat(2,1fr)}.htop h1{font-size:16px}}
+</style>
+</head>
+<body>
+
+<div class="demobar">
+  🧪 <b>데모</b> — 백엔드 연결 없이 <b>가짜 데이터</b>로만 동작합니다. 실제 회사 데이터·시트ID를 포함하지 않습니다. ·
+  <a href="index.html">← 포트폴리오로</a>
+</div>
+
+<header>
+  <div class="wrap">
+    <div class="htop">
+      <div class="logo">📥</div>
+      <div>
+        <h1>IB 입고·스태핑 분석 대시보드</h1>
+        <div class="sub">스태핑(인력 계획 vs 실제) · 입고/B2B/임가공 점수 · Google Sheets → CSV/Apps Script</div>
+      </div>
+      <div class="right">
+        <span class="pill">🏢 이천375센터</span>
+        <span class="pill">🗓 2026.06</span>
+        <span class="pill badge">DEMO</span>
+      </div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-tab="staff">스태핑분석</button>
+      <button class="tab" data-tab="month">월별분석</button>
+      <button class="tab" data-tab="work">작업현황</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="filters">
+    <select><option>2026년 6월</option><option>2026년 5월</option></select>
+    <select><option>이천375센터</option></select>
+    <span class="muted" style="font-size:12px">· 주말 제외 · 적중률 = 100 − |실제−계획|/계획</span>
+  </div>
+
+  <!-- ===== 스태핑분석 ===== -->
+  <section id="tab-staff">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="row">
+      <div class="panel">
+        <h3>일별 스태핑 — 계획(Forecast) 대비 실제(Actual)</h3>
+        <div class="ps">총점수 · 평일 · 라인=계획, 막대=실제</div>
+        <div id="ch-fa"></div>
+        <div class="legend">
+          <span class="lg"><span class="sw" style="background:var(--blue)"></span>Actual(실제)</span>
+          <span class="lg"><span class="sw" style="background:#9ca3af"></span>Forecast(계획)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row c2">
+      <div class="panel">
+        <h3>일별 점수 구성 — 입고 · B2B · 임가공</h3>
+        <div class="ps">Actual 점수 분해 (스택)</div>
+        <div id="ch-types"></div>
+        <div class="legend" id="lg-types"></div>
+      </div>
+      <div class="panel">
+        <h3>정시퇴근 캘린더 (2026.06)</h3>
+        <div class="ps">정시 🏠 · 야근 🌙 · 주말 —</div>
+        <div class="cal" id="cal"></div>
+        <div class="legend">
+          <span class="lg"><span class="sw" style="background:#d1fae5;border:1px solid #a7f3d0"></span>정시</span>
+          <span class="lg"><span class="sw" style="background:#fee2e2;border:1px solid #fecaca"></span>야근</span>
+          <span class="lg"><span class="sw" style="background:#f3f4f6"></span>주말</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 월별분석 ===== -->
+  <section id="tab-month" class="hide">
+    <div class="row c2">
+      <div class="panel">
+        <h3>월별 점수 추이</h3>
+        <div class="ps">입고 · B2B · 임가공 (최근 6개월 · 스택)</div>
+        <div id="ch-month"></div>
+        <div class="legend" id="lg-month"></div>
+      </div>
+      <div class="panel">
+        <h3>유형 비중 (6월)</h3>
+        <div class="ps">Actual 점수 기준</div>
+        <div id="ch-donut"></div>
+        <div class="legend" id="lg-donut"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="panel">
+        <h3>월별 적중률</h3>
+        <div class="ps">계획 대비 실제 정확도 (%)</div>
+        <div id="ch-acc"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 작업현황 ===== -->
+  <section id="tab-work" class="hide">
+    <div class="panel">
+      <h3>일별 작업 현황</h3>
+      <div class="ps">2026.06 평일 · 데모 표본</div>
+      <div class="twrap-scroll">
+        <table id="tbl-work"><thead><tr>
+          <th>날짜</th><th>Forecast</th><th>Actual</th><th>GAP</th><th>적중률</th>
+          <th>장비</th><th>일반</th><th>입고</th><th>B2B·임가공</th><th>퇴근</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    🧪 이 대시보드는 <b>가짜 데이터</b>로 동작하는 데모입니다 — 실제 회사 데이터·인력·수치가 아닙니다.<br>
+    원본: React + recharts · Google Sheets(스태핑 CSV / Apps Script) · Vercel · © 문기동 · 물류 DX
+  </div>
+</footer>
+
+<script>
+/* ============ 가짜 데이터 (결정적 · 실제 데이터 아님) ============ */
+const won = n => Math.round(n).toLocaleString('en-US');
+const TYPE = [{k:'입고',c:'#ec4899'},{k:'B2B',c:'#8b5cf6'},{k:'임가공',c:'#f59e0b'}];
+
+// 2026-06: Jun 1 = 월요일. 요일 dow=(d-1)%7 (0=월..5=토,6=일)
+const staff=[];
+for(let d=1; d<=30; d++){
+  const dow=(d-1)%7, weekend=dow>=5;
+  if(weekend){ staff.push({d,dow,weekend:true}); continue; }
+  const base=880+230*Math.sin(d/3.2)+(d>=24?150:0);
+  const forecast=Math.round(base);
+  const actual=Math.round(base*(0.92+0.14*(((d*7)%10)/10)));
+  const equip=Math.round(5+3*Math.abs(Math.sin(d/2)));
+  const general=Math.round(9+5*Math.abs(Math.cos(d/2.3)));
+  const inbound=Math.round(actual*0.60);
+  const b2b=Math.round(actual*0.26);
+  const imga=actual-inbound-b2b;
+  const onTime=((d*13)%10)>2;   // ~정시 다수
+  const acc=Math.max(0,100-Math.abs(actual-forecast)/forecast*100);
+  staff.push({d,dow,weekend:false,forecast,actual,equip,general,inbound,b2b,imga,onTime,acc});
+}
+const wd=staff.filter(s=>!s.weekend);
+const sum=k=>wd.reduce((a,s)=>a+s[k],0);
+const totF=sum('forecast'), totA=sum('actual'), gap=totA-totF;
+const accAvg=wd.reduce((a,s)=>a+s.acc,0)/wd.length;
+const onRate=wd.filter(s=>s.onTime).length/wd.length*100;
+
+/* ============ KPI 9카드 ============ */
+function renderKPI(){
+  const items=[
+    {ic:'📋',v:won(totF),l:'Forecast 총점수',d:'계획',cls:'n'},
+    {ic:'✅',v:won(totA),l:'Actual 총점수',d:(gap>=0?'▲ ':'▼ ')+won(Math.abs(gap))+' vs 계획',cls:gap>=0?'up':'dn'},
+    {ic:'📊',v:(gap>=0?'+':'')+won(gap),l:'GAP (실제−계획)',d:(gap/totF*100).toFixed(1)+'%',cls:gap>=0?'up':'dn'},
+    {ic:'🎯',v:accAvg.toFixed(1)+'%',l:'적중률',d:accAvg>=90?'우수':'양호',cls:accAvg>=90?'up':'n'},
+    {ic:'🔧',v:won(sum('equip')),l:'장비 인원(누적)',d:'일평균 '+(sum('equip')/wd.length).toFixed(1),cls:'n'},
+    {ic:'👤',v:won(sum('general')),l:'일반 인원(누적)',d:'일평균 '+(sum('general')/wd.length).toFixed(1),cls:'n'},
+    {ic:'📦',v:won(sum('inbound')),l:'입고 점수',d:(sum('inbound')/totA*100).toFixed(0)+'%',cls:'n'},
+    {ic:'🏭',v:won(sum('b2b')+sum('imga')),l:'B2B·임가공 점수',d:((sum('b2b')+sum('imga'))/totA*100).toFixed(0)+'%',cls:'n'},
+    {ic:onRate>=95?'🏠':onRate>=80?'⏰':'🌙',v:onRate.toFixed(0)+'%',l:'정시퇴근율',d:onRate>=95?'매우 우수':onRate>=80?'양호':'주의',cls:onRate>=80?'up':'dn'},
+  ];
+  document.getElementById('kpis').innerHTML=items.map(k=>`
+    <div class="kpi"><div class="ic">${k.ic}</div><div>
+      <div class="v">${k.v}</div><div class="l">${k.l}</div>
+      <div class="d ${k.cls}">${k.d}</div></div></div>`).join('');
+}
+
+const NS='';
+function svg(w,h){return `<svg viewBox="0 0 ${w} ${h}" role="img">`;}
+
+/* 계획 vs 실제 — Actual 막대 + Forecast 라인 */
+function renderFA(){
+  const W=1040,H=300,pl=52,pr=16,pt=16,pb=34,iw=W-pl-pr,ih=H-pt-pb;
+  const max=Math.max(...wd.map(s=>Math.max(s.actual,s.forecast)))*1.12;
+  const bw=iw/wd.length*0.6;
+  const x=i=>pl+iw*(i+.5)/wd.length, y=v=>pt+ih-ih*v/max;
+  let g='';
+  for(let k=0;k<=4;k++){const yy=pt+ih*k/4;g+=`<line x1="${pl}" y1="${yy}" x2="${pl+iw}" y2="${yy}" stroke="#eef0f4"/>`;
+    g+=`<text x="${pl-8}" y="${yy+4}" text-anchor="end" font-size="10" fill="#9aa0ab">${won(max*(4-k)/4)}</text>`;}
+  let bars='',pts=[];
+  wd.forEach((s,i)=>{ const h=ih*s.actual/max, yy=pt+ih-h;
+    bars+=`<rect class="bar" x="${x(i)-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="3" fill="#3b82f6"><title>6/${s.d} · 실제 ${won(s.actual)} · 계획 ${won(s.forecast)} · 적중 ${s.acc.toFixed(0)}%</title></rect>`;
+    pts.push(x(i)+','+y(s.forecast));
+    if(s.d%2===1) bars+=`<text x="${x(i)}" y="${H-12}" text-anchor="middle" font-size="9.5" fill="#9aa0ab">${s.d}</text>`;
+  });
+  document.getElementById('ch-fa').innerHTML=svg(W,H)+g+bars+
+    `<polyline points="${pts.join(' ')}" fill="none" stroke="#9ca3af" stroke-width="2.2" stroke-dasharray="4 3"/>`+
+    pts.map(p=>{const[a,b]=p.split(',');return `<circle cx="${a}" cy="${b}" r="2.4" fill="#6b7280"/>`}).join('')+`</svg>`;
+}
+
+/* 점수 구성 스택 (입고/B2B/임가공) */
+function renderTypes(){
+  const W=1040,H=250,pl=52,pr=16,pt=14,pb=30,iw=W-pl-pr,ih=H-pt-pb;
+  const max=Math.max(...wd.map(s=>s.actual))*1.1, bw=iw/wd.length*0.6;
+  const x=i=>pl+iw*(i+.5)/wd.length;
+  let g='';
+  for(let k=0;k<=3;k++){const yy=pt+ih*k/3;g+=`<line x1="${pl}" y1="${yy}" x2="${pl+iw}" y2="${yy}" stroke="#eef0f4"/>`;
+    g+=`<text x="${pl-8}" y="${yy+4}" text-anchor="end" font-size="10" fill="#9aa0ab">${won(max*(3-k)/3)}</text>`;}
+  let bars='';
+  wd.forEach((s,i)=>{ let acc=0; const segs=[['inbound','#ec4899'],['b2b','#8b5cf6'],['imga','#f59e0b']];
+    segs.forEach(([key,col])=>{ const h=ih*s[key]/max, yy=pt+ih-h-acc;
+      bars+=`<rect class="seg" x="${x(i)-bw/2}" y="${yy}" width="${bw}" height="${h}" fill="${col}"><title>6/${s.d} · ${key} ${won(s[key])}</title></rect>`;
+      acc+=h; });
+    if(s.d%2===1) bars+=`<text x="${x(i)}" y="${H-10}" text-anchor="middle" font-size="9.5" fill="#9aa0ab">${s.d}</text>`;
+  });
+  document.getElementById('ch-types').innerHTML=svg(W,H)+g+bars+`</svg>`;
+  document.getElementById('lg-types').innerHTML=TYPE.map(t=>`<span class="lg"><span class="sw" style="background:${t.c}"></span>${t.k}</span>`).join('');
+}
+
+/* 정시퇴근 캘린더 */
+function renderCal(){
+  const head=['월','화','수','목','금','토','일'];
+  let html=head.map(h=>`<div class="h">${h}</div>`).join('');
+  staff.forEach(s=>{
+    if(s.weekend){ html+=`<div class="cell we"><span class="num">${s.d}</span><span class="ico">—</span></div>`; }
+    else{ const cls=s.onTime?'on':'late'; const ico=s.onTime?'🏠':'🌙';
+      html+=`<div class="cell ${cls}" title="6/${s.d} · ${s.onTime?'정시':'야근'} · 적중 ${s.acc.toFixed(0)}%"><span class="num">${s.d}</span><span class="ico">${ico}</span></div>`; }
+  });
+  document.getElementById('cal').innerHTML=html;
+}
+
+/* 월별 스택 (6개월) */
+const months=['1월','2월','3월','4월','5월','6월'];
+const monthData=months.map((m,i)=>{ const f=0.8+0.06*i;
+  return {m, inbound:Math.round(9000*f*(0.9+0.1*Math.sin(i))), b2b:Math.round(4200*f), imga:Math.round(2100*f*(1+0.08*i)), acc:Math.round(86+i*1.4+2*Math.sin(i))};
+});
+function renderMonth(){
+  const W=560,H=260,pl=46,pr=12,pt=14,pb=30,iw=W-pl-pr,ih=H-pt-pb;
+  const tot=d=>d.inbound+d.b2b+d.imga, max=Math.max(...monthData.map(tot))*1.12, bw=iw/months.length*0.52;
+  const x=i=>pl+iw*(i+.5)/months.length;
+  let g='';
+  for(let k=0;k<=3;k++){const yy=pt+ih*k/3;g+=`<line x1="${pl}" y1="${yy}" x2="${pl+iw}" y2="${yy}" stroke="#eef0f4"/>`;
+    g+=`<text x="${pl-6}" y="${yy+4}" text-anchor="end" font-size="9" fill="#9aa0ab">${won(max*(3-k)/3)}</text>`;}
+  let bars='';
+  monthData.forEach((d,i)=>{ let acc=0; [['inbound','#ec4899'],['b2b','#8b5cf6'],['imga','#f59e0b']].forEach(([key,col])=>{
+      const h=ih*d[key]/max, yy=pt+ih-h-acc;
+      bars+=`<rect class="seg" x="${x(i)-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="2" fill="${col}"><title>${d.m} · ${key} ${won(d[key])}</title></rect>`; acc+=h; });
+    bars+=`<text x="${x(i)}" y="${H-10}" text-anchor="middle" font-size="10.5" fill="#6b7280">${d.m}</text>`;
+  });
+  document.getElementById('ch-month').innerHTML=svg(W,H)+g+bars+`</svg>`;
+  document.getElementById('lg-month').innerHTML=TYPE.map(t=>`<span class="lg"><span class="sw" style="background:${t.c}"></span>${t.k}</span>`).join('');
+}
+
+/* 유형 도넛 (6월) */
+function renderDonut(){
+  const jun=monthData[5], parts=[['입고',jun.inbound,'#ec4899'],['B2B',jun.b2b,'#8b5cf6'],['임가공',jun.imga,'#f59e0b']];
+  const tot=parts.reduce((a,p)=>a+p[1],0);
+  const W=280,H=230,cx=140,cy=110,R=82,r=50; let ang=-Math.PI/2,s=svg(W,H);
+  parts.forEach(p=>{ const frac=p[1]/tot,a2=ang+frac*Math.PI*2;
+    const x1=cx+R*Math.cos(ang),y1=cy+R*Math.sin(ang),x2=cx+R*Math.cos(a2),y2=cy+R*Math.sin(a2);
+    const xi2=cx+r*Math.cos(a2),yi2=cy+r*Math.sin(a2),xi1=cx+r*Math.cos(ang),yi1=cy+r*Math.sin(ang);
+    const lg=frac>.5?1:0;
+    s+=`<path class="seg" d="M ${x1} ${y1} A ${R} ${R} 0 ${lg} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${r} ${r} 0 ${lg} 0 ${xi1} ${yi1} Z" fill="${p[2]}"><title>${p[0]} ${(frac*100).toFixed(0)}%</title></path>`;
+    ang=a2; });
+  s+=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="19" font-weight="900" fill="#1f2937">${won(tot)}</text>`;
+  s+=`<text x="${cx}" y="${cy+15}" text-anchor="middle" font-size="10.5" fill="#9aa0ab">총 점수</text>`;
+  document.getElementById('ch-donut').innerHTML=s+`</svg>`;
+  document.getElementById('lg-donut').innerHTML=parts.map(p=>`<span class="lg"><span class="sw" style="background:${p[2]}"></span>${p[0]} ${(p[1]/tot*100).toFixed(0)}%</span>`).join('');
+}
+
+/* 월별 적중률 라인 */
+function renderAcc(){
+  const W=1040,H=200,pl=44,pr=16,pt=16,pb=28,iw=W-pl-pr,ih=H-pt-pb;
+  const min=80,max=100, x=i=>pl+iw*i/(months.length-1), y=v=>pt+ih-ih*(v-min)/(max-min);
+  let g='';
+  for(let k=0;k<=4;k++){const yy=pt+ih*k/4,val=max-(max-min)*k/4;g+=`<line x1="${pl}" y1="${yy}" x2="${pl+iw}" y2="${yy}" stroke="#eef0f4"/>`;
+    g+=`<text x="${pl-6}" y="${yy+4}" text-anchor="end" font-size="9.5" fill="#9aa0ab">${val.toFixed(0)}%</text>`;}
+  const pts=monthData.map((d,i)=>x(i)+','+y(d.acc));
+  let dots=monthData.map((d,i)=>`<g><circle cx="${x(i)}" cy="${y(d.acc)}" r="4" fill="#3b82f6"><title>${d.m} 적중률 ${d.acc}%</title></circle><text x="${x(i)}" y="${y(d.acc)-10}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#2563eb">${d.acc}%</text><text x="${x(i)}" y="${H-10}" text-anchor="middle" font-size="10.5" fill="#6b7280">${d.m}</text></g>`).join('');
+  document.getElementById('ch-acc').innerHTML=svg(W,H)+g+`<polyline points="${pts.join(' ')}" fill="none" stroke="#3b82f6" stroke-width="2.6"/>`+dots+`</svg>`;
+}
+
+/* 작업현황 테이블 */
+function renderWork(){
+  document.querySelector('#tbl-work tbody').innerHTML=wd.map(s=>`<tr>
+    <td class="name">6/${s.d} (${['월','화','수','목','금'][s.dow]})</td>
+    <td>${won(s.forecast)}</td><td>${won(s.actual)}</td>
+    <td style="color:${s.actual>=s.forecast?'#059669':'#dc2626'}">${s.actual>=s.forecast?'+':''}${won(s.actual-s.forecast)}</td>
+    <td><span class="tag2" style="background:${s.acc>=90?'#d1fae5':'#fef3c7'};color:${s.acc>=90?'#065f46':'#92400e'}">${s.acc.toFixed(0)}%</span></td>
+    <td>${s.equip}</td><td>${s.general}</td><td>${won(s.inbound)}</td><td>${won(s.b2b+s.imga)}</td>
+    <td>${s.onTime?'🏠':'🌙'}</td></tr>`).join('');
+}
+
+/* 탭 전환 */
+document.getElementById('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('.tab'); if(!b)return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
+  const map={staff:'tab-staff',month:'tab-month',work:'tab-work'};
+  Object.values(map).forEach(id=>document.getElementById(id).classList.add('hide'));
+  document.getElementById(map[b.dataset.tab]).classList.remove('hide');
+});
+
+/* init */
+renderKPI(); renderFA(); renderTypes(); renderCal();
+renderMonth(); renderDonut(); renderAcc(); renderWork();
+</script>
+</body>
+</html>
