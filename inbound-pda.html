@@ -1,191 +1,1476 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>입고검수·적치 PDA — 데모 · 문기동</title>
-<meta name="description" content="입고검수·적치 PDA 데모 — 스캔→검수(요청 vs 실제)→적치(존행-베이-단-셀)→사진. 가짜 데이터.">
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  :root{--g:#16a34a;--g2:#15803d;--teal:#0d9488;--amber:#d97706;--red:#dc2626;
-    --ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--bg:#eef1f4;--card:#fff;--soft:#f6f8fa}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-    color:var(--ink);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
-  a{color:inherit}
-  .demobar{background:linear-gradient(90deg,#16a34a,#0d9488);color:#fff;font-size:13px;text-align:center;padding:8px 14px}
-  .demobar b{font-weight:800}.demobar a{color:#fff;text-decoration:underline;font-weight:700}
-  .stage{display:flex;justify-content:center;padding:22px 12px 40px}
-  /* phone */
-  .phone{width:100%;max-width:400px;background:var(--card);border-radius:26px;overflow:hidden;
-    box-shadow:0 18px 50px rgba(20,40,30,.22);border:1px solid #dfe4ea;display:flex;flex-direction:column;min-height:720px}
-  .app-top{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;padding:16px 18px 14px}
-  .app-top .t{font-size:16px;font-weight:900;display:flex;align-items:center;gap:8px}
-  .app-top .meta{display:flex;gap:8px;margin-top:10px;font-size:11.5px;flex-wrap:wrap}
-  .app-top .m{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px 10px;font-weight:700}
-  .prog{height:5px;background:rgba(255,255,255,.25);border-radius:9px;margin-top:12px;overflow:hidden}
-  .prog i{display:block;height:100%;background:#fff;border-radius:9px;transition:width .4s}
-  .body{flex:1;padding:14px;overflow:auto}
-  .scan{display:flex;gap:8px;margin-bottom:12px}
-  .scan input{flex:1;font-family:inherit;font-size:14px;padding:11px 13px;border:1.5px solid var(--line);border-radius:11px}
-  .scan input:focus{outline:none;border-color:var(--g)}
-  .scan button{background:var(--g);color:#fff;border:none;border-radius:11px;padding:0 15px;font-weight:800;font-size:18px;font-family:inherit}
-  .sect{font-size:12px;font-weight:800;color:var(--mut);margin:4px 2px 8px;display:flex;justify-content:space-between}
-  .item{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:9px;cursor:pointer;transition:.12s}
-  .item:active{transform:scale(.985)}
-  .item.done{opacity:.55}
-  .item .r1{display:flex;align-items:center;gap:7px}
-  .item .cust{font-size:11px;font-weight:800;color:var(--teal);background:#ccfbf1;border-radius:6px;padding:2px 7px}
-  .item .st{margin-left:auto;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px}
-  .st.wait{background:#fef9c3;color:#854d0e}.st.ok{background:#dcfce7;color:#166534}
-  .item .nm{font-size:14px;font-weight:800;margin:6px 0 2px}
-  .item .sub{font-size:11.5px;color:var(--mut);display:flex;gap:10px;flex-wrap:wrap}
-  .item .sub b{color:#374151}
-  /* detail */
-  .card2{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:14px;margin-bottom:12px}
-  .kv{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px dashed #e5e7eb}
-  .kv:last-child{border:none}.kv .k{color:var(--mut);font-weight:600}.kv .v{font-weight:800}
-  .qtybox{display:flex;align-items:center;gap:10px;justify-content:center;margin:8px 0}
-  .qtybox button{width:46px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:24px;font-weight:800;font-family:inherit}
-  .qtybox .num{font-size:34px;font-weight:900;min-width:80px;text-align:center}
-  .judge{text-align:center;font-size:13px;font-weight:800;padding:9px;border-radius:11px;margin-bottom:12px}
-  .judge.ok{background:#dcfce7;color:#166534}.judge.short{background:#fef3c7;color:#92400e}.judge.over{background:#fee2e2;color:#991b1b}
-  .locgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}
-  .loc{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 6px;text-align:center;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer}
-  .loc.on{border-color:var(--g);background:#f0fdf4;color:var(--g2)}
-  .loc small{display:block;font-size:9.5px;color:var(--mut);font-weight:600;margin-top:2px}
-  .photo{border:2px dashed #cbd5e1;border-radius:13px;padding:22px;text-align:center;color:var(--mut);font-size:13px;margin:8px 0 12px;cursor:pointer}
-  .photo.taken{border-style:solid;border-color:var(--g);background:#f0fdf4;color:var(--g2);font-weight:700}
-  .btn{width:100%;background:var(--g);color:#fff;border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer}
-  .btn:disabled{background:#cbd5e1}
-  .btn.ghost{background:#fff;color:var(--mut);border:1.5px solid var(--line);margin-bottom:9px}
-  .toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);background:#111827;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:999px;opacity:0;transition:.3s;pointer-events:none;z-index:50}
-  .toast.show{opacity:1}
-  .footnote{text-align:center;font-size:11.5px;color:var(--mut);padding:14px 20px 4px}
-  .hide{display:none}
-</style>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <!-- ⚠️ viewport meta 의도적 미사용: 원본 GAS 앱과 동일한 화면 크기를 위해서임.
+         GAS(HtmlService)는 HTML 내 <meta viewport>를 무시하므로 원본은 모바일 viewport가 없었고,
+         그 결과 ~980px 기본 폭 → @media(min-width:768px) 데스크톱 규칙 적용 → 화면에 맞게 자동 축소되어 "딱 맞게" 보였음.
+         device-width viewport를 넣으면 모바일 거대 글씨(80px) 규칙이 적용되어 PDA에서 너무 크게 나옴. -->
+    <title>창고관리 PDA 시스템</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="이천375 검수">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Roboto', 'Noto Sans KR', sans-serif; background: white; min-height: 100vh; padding: 0; color: #333; }
+    .container { max-width: 100%; width: 100%; margin: 0; background: white; border-radius: 0; box-shadow: none; overflow: hidden; min-height: 100vh; }
+    .header { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 50px 15px; text-align: center; position: relative; }
+    .header h1 { font-size: 80px; margin-bottom: 20px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+    .subtitle { font-size: 60px; opacity: 0.95; line-height: 1.2; }
+    .dash-btn { position: absolute; top: 18px; right: 18px; z-index: 5; background: #fff; color: #5a55d6; border: none; border-radius: 16px; padding: 18px 26px; font-size: 32px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 12px; box-shadow: 0 5px 16px rgba(0,0,0,0.28); letter-spacing: -0.5px; }
+    .dash-btn:active { transform: translateY(1px); box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+    .content { padding: 0; }
+    .scan-section { background: #f8f9fa; border-radius: 0; padding: 45px 15px; margin: 0; border: none; border-top: 7px solid #e9ecef; border-bottom: 7px solid #e9ecef; }
+    .section-title { font-size: 45px; font-weight: 800; color: #495057; margin-bottom: 35px; display: flex; align-items: center; }
+    .section-icon { font-size: 60px; margin-right: 25px; }
+    .input-group { margin-bottom: 35px; }
+    .input-group label { display: block; margin-bottom: 20px; font-weight: 700; color: #6c757d; font-size: 35px; }
+    .scan-input { width: 100% !important; padding: 150px 35px !important; border: 7px solid #dee2e6 !important; border-radius: 20px !important; font-size: 80px !important; background: white !important; min-height: 510px !important; font-weight: 600 !important; text-align: center !important; }
+    .scan-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.2); }
+    .btn { width: 100%; padding: 40px 20px; border: none; border-radius: 20px; font-size: 40px; font-weight: 800; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 15px; background: linear-gradient(45deg, #667eea, #764ba2); color: white; margin-bottom: 25px; min-height: 120px; letter-spacing: -0.5px; }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(102, 126, 234, 0.35); }
+    .btn:disabled { background: #6c757d; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-photo { background: linear-gradient(45deg, #e91e63, #c2185b) !important; }
+    .btn-photo:hover { box-shadow: 0 12px 35px rgba(233, 30, 99, 0.35) !important; }
+    .photo-preview { display: none; margin: 20px 0; text-align: center; }
+    .photo-preview.show { display: block; }
+    .photo-preview img { max-width: 100%; max-height: 400px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .photo-preview-actions { margin-top: 15px; display: flex; gap: 10px; }
+    .result-card { background: white; border: none; border-top: 7px solid #e9ecef; border-bottom: 7px solid #e9ecef; border-radius: 0; padding: 40px 10px; margin: 15px 0 0 0; display: none; }
+    .result-card.show { display: block; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .result-card.success { border-color: #28a745; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); }
+    .result-card.error { border-color: #dc3545; background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); }
+    .result-header { display: flex; align-items: center; margin-bottom: 35px; padding: 0 5px; }
+    .result-icon { font-size: 60px; margin-right: 30px; }
+    .result-title { font-size: 45px; font-weight: 800; }
+    .product-info { background: rgba(255,255,255,0.8); border-radius: 0; padding: 35px 5px; margin: 0 -10px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding: 28px 10px; border-bottom: 3px solid rgba(0,0,0,0.08); }
+    .info-row:last-child { border-bottom: none; margin-bottom: 0; }
+    .info-label { font-weight: 900; color: #495057; font-size: 40px; }
+    .info-value { color: #212529; font-size: 40px; text-align: right; max-width: 65%; word-break: break-word; font-weight: 800; }
+    .photo-link { color: #e91e63; text-decoration: none; font-weight: 900; display: inline-flex; align-items: center; gap: 8px; }
+    .photo-link:hover { text-decoration: underline; }
+    .loading { text-align: center; padding: 50px; }
+    .loading p { font-size: 35px; margin-top: 25px; font-weight: 600; }
+    .spinner { display: inline-block; width: 100px; height: 100px; border: 10px solid #f3f3f3; border-top: 10px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .footer { background: #f8f9fa; padding: 40px 20px; text-align: center; font-size: 28px; color: #6c757d; border-top: 3px solid #e9ecef; }
+    button[onclick^="setLocation"] { background: #f8f9fa !important; border: 7px solid #dee2e6 !important; border-radius: 15px !important; padding: 35px 25px !important; margin-right: 10px !important; margin-bottom: 15px !important; cursor: pointer !important; font-size: 35px !important; font-weight: 700 !important; transition: all 0.2s ease !important; min-width: 30%; flex: 1; min-height: 100px; }
+    button[onclick^="setLocation"]:hover { background: #e9ecef !important; }
+    select { width: 100%; padding: 45px 30px !important; border: 7px solid #dee2e6 !important; border-radius: 20px !important; font-size: 50px !important; margin-bottom: 20px !important; background: white; cursor: pointer; min-height: 150px !important; font-weight: 600 !important; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 30px center; background-size: 50px; padding-right: 90px !important; }
+    #noteInput, #quantityInput { width: 100%; padding: 45px 30px !important; border: 7px solid #dee2e6 !important; border-radius: 20px !important; font-size: 50px !important; margin-bottom: 20px !important; background: white; cursor: pointer; min-height: 150px !important; font-weight: 600 !important; }
+    #noteDropdown { width: 100%; padding: 45px 30px !important; border: 7px solid #dee2e6 !important; border-radius: 20px !important; font-size: 50px !important; transition: all 0.3s ease; background: white; min-height: 150px !important; font-weight: 600 !important; margin-bottom: 20px !important; }
+    #locationInput { width: 100%; padding: 45px 30px !important; border: 7px solid #dee2e6 !important; border-radius: 20px !important; font-size: 50px !important; transition: all 0.3s ease; background: white; min-height: 150px !important; font-weight: 600 !important; }
+    #damageQuantity { width: 100%; padding: 45px 30px !important; border: 7px solid #ffc107 !important; border-radius: 20px !important; font-size: 50px !important; background: #fffbf0; min-height: 150px !important; font-weight: 600 !important; }
+    .bulk-update-info { background: #e7f3ff; border: 3px solid #007bff; border-radius: 15px; padding: 20px; margin: 20px 0; font-size: 32px; color: #004085; }
+    .bulk-update-info h4 { margin-bottom: 10px; font-size: 36px; font-weight: 700; color: #007bff; }
+    .recommend-location-box { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 5px solid #4caf50; border-radius: 15px; padding: 25px; margin: 20px 0; text-align: center; }
+    .recommend-location-box h4 { font-size: 36px; font-weight: 700; color: #2e7d32; margin-bottom: 15px; }
+    .recommend-location-value { font-size: 55px; font-weight: 900; color: #1b5e20; padding: 15px; background: rgba(255,255,255,0.7); border-radius: 10px; display: inline-block; min-width: 60%; }
+    .warmup-status { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.6); color: white; padding: 12px 20px; border-radius: 30px; font-size: 26px; font-weight: 600; display: none; z-index: 9999; pointer-events: none; }
+    .warmup-status.show { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    #photoFileInput { display: none; }
+    @media (min-width: 768px) {
+        .container { max-width: 1200px; margin: 20px auto; border-radius: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.12); }
+        .content { padding: 30px 25px; }
+        .scan-section { margin: 0 0 20px 0; border-radius: 20px; border: 7px solid #e9ecef; padding: 40px 30px; }
+        .result-card { margin: 20px 0; border-radius: 20px; border: 7px solid #e9ecef; padding: 35px 30px; }
+        .product-info { margin: 0; border-radius: 15px; padding: 30px; }
+        .header h1 { font-size: 42px; }
+        .subtitle { font-size: 28px; }
+        .dash-btn { top: 16px; right: 16px; padding: 11px 18px; font-size: 18px; border-radius: 12px; gap: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.22); }
+        .scan-input, #noteInput, #locationInput, #quantityInput { font-size: 28px; padding: 25px; min-height: 85px; border: 4px solid #dee2e6; }
+        select { font-size: 28px !important; padding: 25px !important; min-height: 85px !important; border: 4px solid #dee2e6 !important; }
+        .btn { font-size: 28px; padding: 28px; min-height: 90px; }
+        .info-label, .info-value { font-size: 26px; }
+        .section-title { font-size: 32px; }
+        .bulk-update-info { font-size: 18px; }
+        .bulk-update-info h4 { font-size: 20px; }
+        .recommend-location-box h4 { font-size: 24px; }
+        .recommend-location-value { font-size: 32px; }
+    }
+    @media (max-width: 1000px) { .info-label, .info-value { font-size: 40px !important; } }
+    #updateSection { margin: 0 !important; border-radius: 0 !important; padding: 45px 15px !important; }
+    /* 👤 작업자 식별 UI */
+    .worker-chip { margin-top: 22px; display: inline-flex; align-items: center; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.6); color: #fff; border-radius: 34px; padding: 16px 32px; font-size: 34px; font-weight: 800; cursor: pointer; }
+    .worker-pick { width: 100%; padding: 34px; border: 4px solid #dee2e6; border-radius: 16px; background: #f8f9fa; font-size: 40px; font-weight: 800; color: #333; cursor: pointer; }
+    .worker-pick:active { background: #e9ecef; }
+    .worker-pick.manual { background: #eef1ff; border-color: #c7d0ff; color: #4b54c9; }
+    @media (min-width: 768px) {
+        .worker-chip { margin-top: 12px; padding: 8px 16px; font-size: 16px; border-radius: 20px; }
+        .worker-pick { font-size: 22px; padding: 18px; border-width: 3px; }
+    }
+    </style>
 </head>
 <body>
-<div class="demobar">🧪 <b>데모</b> — 백엔드 없이 <b>가짜 데이터</b>로 동작. 실제 회사 데이터·키 없음 · <a href="index.html">← 포트폴리오로</a></div>
-
-<div class="stage">
-  <div class="phone">
-    <div class="app-top">
-      <div class="t">📥 입고검수·적치 PDA</div>
-      <div class="meta">
-        <span class="m">🏢 이천375센터</span>
-        <span class="m">👤 데모작업자</span>
-        <span class="m" id="doneMeta">완료 0/6</span>
+<div style="background:linear-gradient(90deg,#16a34a,#0d9488);color:#fff;font-size:12.5px;text-align:center;padding:7px 12px">🧪 <b>데모</b> — 실제 앱 그대로, <b>가짜 데이터</b>로 동작 (회사 데이터·키 없음) · <a href="index.html" style="color:#fff;text-decoration:underline;font-weight:700">← 포트폴리오</a></div>
+    <!-- 🔒 접속 잠금 게이트 -->
+    <div id="authGate" style="position:fixed;inset:0;background:linear-gradient(45deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:'Noto Sans KR',sans-serif;">
+      <div style="background:#fff;padding:34px 28px;border-radius:18px;width:300px;max-width:86vw;text-align:center;box-shadow:0 12px 44px rgba(0,0,0,.3);">
+        <div style="font-size:42px;">🔒</div>
+        <div style="font-weight:800;font-size:19px;margin:6px 0 2px;">이천375 입고검수</div>
+        <div style="color:#999;font-size:13px;margin-bottom:18px;">접속 비밀번호를 입력하세요</div>
+        <input id="gatePw" type="password" placeholder="비밀번호" autocomplete="current-password"
+          style="width:100%;padding:13px;border:1px solid #ddd;border-radius:11px;font-size:16px;text-align:center;"
+          onkeydown="if(event.key==='Enter')gateSubmit()">
+        <div id="gateErr" style="color:#d8483f;font-size:13px;height:18px;margin-top:8px;"></div>
+        <button id="gateBtn" onclick="gateSubmit()"
+          style="width:100%;padding:13px;margin-top:4px;border:none;border-radius:11px;background:#5a55d6;color:#fff;font-size:16px;font-weight:700;cursor:pointer;">입장</button>
       </div>
-      <div class="prog"><i id="prog" style="width:0%"></i></div>
     </div>
-    <div class="body" id="body"><!-- rendered --></div>
-    <div class="footnote">🧪 가짜 데이터로 동작하는 데모입니다 · 원본: 바닐라 JS PWA · Supabase(RLS·RPC) · Vercel</div>
-  </div>
-</div>
-<div class="toast" id="toast"></div>
 
-<script>
-/* ===== 가짜 입고 데이터 (실제 아님) ===== */
-const ITEMS=[
-  {id:1,cust:'오리무역',  nm:'미니 텀블러 350ml',   bc:'8801234500017',plt:'PLT-2606-011',req:120},
-  {id:2,cust:'너구리상사',nm:'캔버스 에코백 M',     bc:'8801234500024',plt:'PLT-2606-012',req:200},
-  {id:3,cust:'판다물산',  nm:'세라믹 머그 2P',       bc:'8801234500031',plt:'PLT-2606-013',req:96},
-  {id:4,cust:'오리무역',  nm:'우드 코스터 4P세트',   bc:'8801234500048',plt:'PLT-2606-014',req:150},
-  {id:5,cust:'코알라유통',nm:'스테인리스 보틀 500',  bc:'8801234500055',plt:'PLT-2606-015',req:80},
-  {id:6,cust:'너구리상사',nm:'린넨 앞치마',          bc:'8801234500062',plt:'PLT-2606-016',req:60},
-];
-const LOCS=['A01-03-2-05','A02-01-1-03','B01-05-3-02','B02-02-2-07','C01-04-1-06','C03-06-2-01'];
-const state={}; ITEMS.forEach(it=>state[it.id]={done:false});
-let cur=null, actual=0, pickedLoc=null, photo=false;
-
-const $=id=>document.getElementById(id);
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
-function doneCount(){return ITEMS.filter(i=>state[i.id].done).length;}
-function updHeader(){const d=doneCount();$('doneMeta').textContent=`완료 ${d}/${ITEMS.length}`;$('prog').style.width=(d/ITEMS.length*100)+'%';}
-
-/* 목록 화면 */
-function renderList(){
-  cur=null;
-  const rows=ITEMS.map(it=>{const dn=state[it.id].done;return `
-    <div class="item ${dn?'done':''}" onclick="openItem(${it.id})">
-      <div class="r1"><span class="cust">${it.cust}</span>
-        <span class="st ${dn?'ok':'wait'}">${dn?'✔ 적치완료':'검수대기'}</span></div>
-      <div class="nm">${it.nm}</div>
-      <div class="sub"><span>🏷 <b>${it.bc}</b></span><span>📦 ${it.plt}</span><span>요청 <b>${it.req}</b></span></div>
-    </div>`;}).join('');
-  $('body').innerHTML=`
-    <div class="scan"><input id="scanIn" placeholder="바코드 / QR / PLT.NO 스캔" onkeydown="if(event.key==='Enter')doScan()">
-      <button onclick="doScan()">⊙</button></div>
-    <div class="sect"><span>검수 대기 목록</span><span>${ITEMS.length-doneCount()}건 남음</span></div>
-    ${rows}`;
-}
-function doScan(){
-  const v=($('scanIn').value||'').trim();
-  const hit=ITEMS.find(it=>!state[it.id].done)||ITEMS[0];
-  toast(v?`스캔: ${v}`:'스캔 시뮬레이션');
-  openItem(hit.id);
-}
-
-/* 검수 화면 */
-function openItem(id){
-  cur=ITEMS.find(i=>i.id===id); actual=cur.req; // 기본=요청수량
-  renderInspect();
-}
-function renderInspect(){
-  const it=cur;
-  $('body').innerHTML=`
-    <button class="btn ghost" onclick="renderList()">← 목록</button>
-    <div class="sect"><span>① 품목 검수</span><span>${it.cust}</span></div>
-    <div class="card2">
-      <div class="kv"><span class="k">SKU명</span><span class="v">${it.nm}</span></div>
-      <div class="kv"><span class="k">바코드</span><span class="v">${it.bc}</span></div>
-      <div class="kv"><span class="k">PLT.NO</span><span class="v">${it.plt}</span></div>
-      <div class="kv"><span class="k">요청 수량</span><span class="v">${it.req}</span></div>
+    <!-- 👤 작업자 선택 게이트 (로그인 후 1회) -->
+    <div id="workerGate" style="position:fixed;inset:0;background:linear-gradient(45deg,#667eea,#764ba2);display:none;align-items:center;justify-content:center;z-index:99998;padding:30px;">
+      <div style="background:#fff;padding:40px 30px;border-radius:22px;width:560px;max-width:92vw;text-align:center;box-shadow:0 12px 44px rgba(0,0,0,.3);">
+        <div style="font-size:60px;">👤</div>
+        <div style="font-weight:800;font-size:40px;margin:10px 0 6px;color:#333;">작업자를 선택하세요</div>
+        <div style="color:#999;font-size:26px;margin-bottom:24px;">적치·수정 내역이 이 이름으로 기록됩니다</div>
+        <div id="workerList" style="display:flex;flex-direction:column;gap:16px;max-height:60vh;overflow:auto;"></div>
+      </div>
     </div>
-    <div class="sect"><span>실제 검수 수량</span></div>
-    <div class="qtybox">
-      <button onclick="chgQty(-1)">−</button>
-      <span class="num" id="qn">${actual}</span>
-      <button onclick="chgQty(1)">＋</button>
+
+    <div class="warmup-status" id="warmupStatus"></div>
+    <div id="netStatus" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99990;background:#d8483f;color:#fff;text-align:center;font-size:28px;font-weight:700;padding:14px 10px;font-family:'Noto Sans KR',sans-serif;line-height:1.3;"></div>
+
+    <div class="container">
+        <div class="header">
+            <button class="dash-btn" onclick="window.open('/dashboard','_blank','noopener')">📊 대시보드</button>
+            <h1>입고검수적치 PDA 시스템</h1>
+            <div class="subtitle">이천375센터 PDA v5.5.0</div>
+            <div id="workerChip" class="worker-chip" onclick="changeWorker()" title="작업자 변경"></div>
+        </div>
+
+        <div class="content">
+            <div class="scan-section">
+                <div class="section-title">
+                    <span class="section-icon">📱</span>
+                    바코드 & PLT.NO 검색
+                </div>
+
+                <div class="input-group">
+                    <label for="barcodeInput">바코드 또는 PLT.NO를 입력하거나 스캔하세요</label>
+                    <input type="text" id="barcodeInput" class="scan-input" placeholder="예: 260310ㅡ1 (PLT.NO), 8809937590675 (바코드)" autocomplete="off" autocapitalize="off">
+                </div>
+
+                <button class="btn" onclick="searchBarcode()" id="searchBtn">
+                    <span>🔍</span> 통합 검색
+                </button>
+
+                <div class="result-card" id="resultCard"></div>
+
+                <div class="result-card" id="customerSelectCard" style="display:none;">
+                    <div class="result-header">
+                        <span class="result-icon">🏢</span>
+                        <span class="result-title">여러 고객사에서 발견</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="font-size: 32px; color: #6c757d; margin-bottom: 20px;">
+                            동일한 바코드가 여러 고객사에서 발견되었습니다.<br>
+                            확인할 고객사를 선택해주세요:
+                        </p>
+                        <div id="customerList" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+
+                <div class="result-card" id="itemSelectCard" style="display:none;">
+                    <div class="result-header">
+                        <span class="result-icon">📋</span>
+                        <span class="result-title">여러 항목 발견</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="font-size: 32px; color: #6c757d; margin-bottom: 20px;">
+                            <strong id="selectedCustomerName">고객사</strong>에서 여러 항목이 발견되었습니다.<br>
+                            작업할 항목을 선택해주세요:
+                        </p>
+                        <div id="itemList" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scan-section" id="updateSection" style="display:none;">
+                <div class="section-title">
+                    <span class="section-icon">✏️</span>
+                    정보 업데이트
+                </div>
+
+                <div class="bulk-update-info" id="bulkUpdateInfo" style="display:none;">
+                    <h4>📦 PLT.NO 일괄 업데이트</h4>
+                    <p id="bulkUpdateMessage"></p>
+                </div>
+
+                <div class="input-group">
+                    <label>수량 업데이트</label>
+                    <input type="number" id="quantityInput" placeholder="현재 수량" min="1">
+                    <button class="btn" onclick="updateQuantity()" style="margin-top:10px; background: linear-gradient(45deg, #f39c12, #e67e22);">
+                        <span>📦</span> 수량 업데이트
+                    </button>
+                    <button class="btn" onclick="openMultiSplit()" style="margin-top:10px; background: linear-gradient(45deg, #9b59b6, #8e44ad);">
+                        <span>🔀</span> 다중 분할 (여러 파레트로 분할)
+                    </button>
+                </div>
+
+                <div class="input-group" id="multiSplitSection" style="display:none; background: #f8f9fa; padding: 30px; border-radius: 15px; margin-top: 20px;">
+                    <h3 style="margin-bottom: 20px; color: #495057;">
+                        <span style="font-size: 40px;">🔀</span> 다중 파레트 분할
+                    </h3>
+                    <p style="margin-bottom: 20px; font-size: 30px; color: #6c757d;">
+                        현재 수량: <strong id="currentQtyDisplay">0</strong>EA
+                    </p>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 30px; margin-bottom: 15px; display: block;">빠른 템플릿:</label>
+                        <button type="button" onclick="applyTemplate([25,25,25,25])" style="background: #e9ecef; border: 3px solid #dee2e6; border-radius: 10px; padding: 15px 20px; margin-right: 10px; margin-bottom: 10px; cursor: pointer; font-size: 28px; font-weight: 600;">25EA×4</button>
+                        <button type="button" onclick="applyTemplate([50,50])" style="background: #e9ecef; border: 3px solid #dee2e6; border-radius: 10px; padding: 15px 20px; margin-right: 10px; margin-bottom: 10px; cursor: pointer; font-size: 28px; font-weight: 600;">50EA×2</button>
+                        <button type="button" onclick="applyTemplate([10,10,40,40])" style="background: #e9ecef; border: 3px solid #dee2e6; border-radius: 10px; padding: 15px 20px; margin-bottom: 10px; cursor: pointer; font-size: 28px; font-weight: 600;">10EA×2 + 40EA×2</button>
+                    </div>
+
+                    <div id="splitInputs" style="margin-bottom: 20px;"></div>
+
+                    <button type="button" onclick="addSplitInput()" style="background: #28a745; color: white; border: none; border-radius: 10px; padding: 20px 30px; margin-right: 10px; cursor: pointer; font-size: 30px; font-weight: 600;">➕ 파레트 추가</button>
+
+                    <div style="margin-top: 25px; padding-top: 25px; border-top: 3px solid #dee2e6;">
+                        <p style="font-size: 32px; margin-bottom: 15px;">
+                            합계: <strong id="splitTotalDisplay" style="color: #28a745;">0</strong>EA
+                            <span id="splitValidation" style="margin-left: 15px;"></span>
+                        </p>
+                        <button class="btn" onclick="executeMultiSplit()" style="background: linear-gradient(45deg, #28a745, #27ae60);">
+                            <span>✅</span> 분할 실행
+                        </button>
+                        <button class="btn" onclick="cancelMultiSplit()" style="background: #6c757d; margin-top: 10px;">
+                            <span>❌</span> 취소
+                        </button>
+                    </div>
+                </div>
+
+                <div class="recommend-location-box" id="recommendLocationBox" style="display:none;">
+                    <h4>📍 추천 적치위치</h4>
+                    <div class="recommend-location-value" id="recommendLocationValue">-</div>
+                </div>
+
+                <div class="input-group">
+                    <label>적치 위치</label>
+                    <div id="singleLocationSection">
+                        <div style="margin-bottom: 10px;">
+                            <button type="button" onclick="setLocation('적치대기로케이션-0-0')" style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 8px; padding: 10px 15px; margin-right: 5px; margin-bottom: 5px; cursor: pointer; font-size: 14px; transition: all 0.2s ease;">📦 적치대기로케이션-0-0</button>
+                            <button type="button" onclick="setLocation('입고대기로케이션-0-0')" style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 8px; padding: 10px 15px; margin-right: 5px; margin-bottom: 5px; cursor: pointer; font-size: 14px; transition: all 0.2s ease;">📥 입고대기로케이션-0-0</button>
+                            <button type="button" onclick="setLocation('lost-0-0-0')" style="background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 8px; padding: 10px 15px; margin-bottom: 5px; cursor: pointer; font-size: 14px; transition: all 0.2s ease;">❓ lost-0-0-0</button>
+                        </div>
+                        <input type="text" id="locationInput" placeholder="예: L11-26-03-01 (QR 스캔 또는 직접 입력)">
+                        <button class="btn" onclick="updateLocation()" style="margin-top:10px; background: linear-gradient(45deg, #007bff, #0056b3);">
+                            <span>📍</span> 위치 업데이트 (PLT.NO 일괄적용)
+                        </button>
+                        <button class="btn btn-photo" onclick="captureLocationPhoto()" id="photoBtn" style="margin-top:10px;">
+                            <span>📷</span> 적치 사진 촬영 (선택)
+                        </button>
+                        <input type="file" id="photoFileInput" accept="image/*" capture="environment" onchange="handlePhotoCapture(event)">
+                        <div class="photo-preview" id="photoPreview">
+                            <img id="photoPreviewImg" src="" alt="사진 미리보기">
+                            <div class="photo-preview-actions">
+                                <button class="btn" onclick="retakePhoto()" style="flex: 1; background: #6c757d;">
+                                    <span>🔄</span> 다시 촬영
+                                </button>
+                                <button class="btn btn-photo" onclick="uploadPhoto()" style="flex: 1;">
+                                    <span>✅</span> 사진 저장
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>라벨 출력</label>
+                    <button class="btn" onclick="openLabelPreview()" id="labelPrintBtn" style="background: linear-gradient(45deg, #ff6b35, #f7931e);">
+                        <span>🖨️</span> 라벨 출력
+                    </button>
+                    <div id="labelPreviewSection" style="display:none; margin-top: 20px; background: #f8f9fa; border: 5px solid #dee2e6; border-radius: 15px; padding: 25px;">
+                        <h4 style="font-size: 36px; font-weight: 700; color: #495057; margin-bottom: 20px;">📋 라벨 미리보기</h4>
+                        <div id="labelCanvas" style="width: 100%; max-width: 400px; min-height: 400px; background: white; border: 3px solid #333; border-radius: 10px; padding: 20px; margin: 0 auto 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            <div style="width: 100%; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                                <div style="font-size: 22px; font-weight: 900; color: #333;" id="previewCustomer">고객사</div>
+                                <div style="font-size: 14px; color: #888; margin-top: 4px;" id="previewMixedBadge"></div>
+                            </div>
+                            <div id="previewQrArea" style="width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; background: #f9f9f9; border: 2px dashed #ccc; border-radius: 8px; margin: 8px 0;">
+                                <span style="color:#999; font-size:14px;">QR Code</span>
+                            </div>
+                            <div style="width: 100%; text-align: center; border-top: 2px solid #eee; padding-top: 8px;">
+                                <div style="font-size: 26px; font-weight: 900; color: #1a1a1a; margin-bottom: 8px;" id="previewPltNo">PLT.NO</div>
+                                <div id="previewItemsList" style="width: 100%; text-align: left; padding: 0 10px; font-family: monospace; font-size: 13px; color: #333;">
+                                    <!-- 동적으로 바코드-수량 행이 채워짐 (다중 고객사일 경우 그룹화) -->
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn" onclick="closeLabelPreview()" style="flex: 1; background: #6c757d;">
+                                <span>❌</span> 닫기
+                            </button>
+                            <button class="btn" onclick="launchSewooLabel()" style="flex: 2; background: linear-gradient(45deg, #ff6b35, #f7931e);">
+                                <span>🖨️</span> SewooLabel 앱으로 출력
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>특이사항</label>
+                    <select id="noteDropdown" onchange="handleNoteSelection()">
+                        <option value="">선택하세요</option>
+                        <option value="벌크">벌크</option>
+                        <option value="바코드 미검수">바코드 미검수</option>
+                        <option value="파손">파손</option>
+                        <option value="실셈">실셈</option>
+                        <option value="직접입력">선택 입력</option>
+                    </select>
+                    <div id="damageQuantityDiv" style="display:none; margin-bottom: 10px;">
+                        <input type="number" id="damageQuantity" placeholder="파손 수량 입력" min="1" onchange="updateDamageNote()">
+                    </div>
+                    <input type="text" id="noteInput" placeholder="특이사항 입력 (직접 입력 가능)">
+                    <button class="btn" onclick="updateNote()" style="margin-top:10px;">
+                        <span>📝</span> 특이사항 업데이트
+                    </button>
+                </div>
+
+                <div class="input-group" style="margin-top: 30px; padding-top: 30px; border-top: 3px solid #dee2e6;">
+                    <button class="btn" onclick="searchBarcode()" style="background: linear-gradient(45deg, #6c757d, #495057);">
+                        <span>🔄</span> 다시 검색
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div>© 입고검수적치 PDA 시스템</div>
+            <div style="margin-top: 5px;">이천375센터 PDA - v5.5.0</div>
+        </div>
     </div>
-    <div id="judge"></div>
-    <button class="btn" onclick="toPlace()">적치 진행 →</button>`;
-  renderJudge();
-}
-function chgQty(d){actual=Math.max(0,actual+d);$('qn').textContent=actual;renderJudge();}
-function renderJudge(){
-  const diff=actual-cur.req; let cls,txt;
-  if(diff===0){cls='ok';txt='✅ 수량 일치 (요청 '+cur.req+' = 실제 '+actual+')';}
-  else if(diff<0){cls='short';txt='⚠️ 부족 '+Math.abs(diff)+' (요청 '+cur.req+' → 실제 '+actual+')';}
-  else{cls='over';txt='❗ 과다 +'+diff+' (요청 '+cur.req+' → 실제 '+actual+')';}
-  $('judge').innerHTML=`<div class="judge ${cls}">${txt}</div>`;
-}
 
-/* 적치 화면 */
-function toPlace(){pickedLoc=null;photo=false;renderPlace();}
-function renderPlace(){
-  const it=cur;
-  $('body').innerHTML=`
-    <button class="btn ghost" onclick="renderInspect()">← 검수</button>
-    <div class="sect"><span>② 적치 (존행-베이-단-셀)</span><span>실제 ${actual}</span></div>
-    <div class="card2"><div class="kv"><span class="k">${it.nm}</span><span class="v">${actual}개</span></div></div>
-    <div class="sect"><span>추천 로케이션 선택</span></div>
-    <div class="locgrid" id="locg">${LOCS.map((l,i)=>`<button class="loc" onclick="pickLoc(${i})">${l.split('-').slice(0,2).join('-')}<small>${l}</small></button>`).join('')}</div>
-    <div class="sect"><span>적치 사진 (누락검사)</span></div>
-    <div class="photo" id="ph" onclick="takePhoto()">📷 탭하여 적치 사진 촬영</div>
-    <button class="btn" id="doneBtn" disabled onclick="finish()">적치 완료</button>`;
-}
-function pickLoc(i){pickedLoc=LOCS[i];document.querySelectorAll('#locg .loc').forEach((b,k)=>b.classList.toggle('on',k===i));checkDone();}
-function takePhoto(){photo=true;$('ph').classList.add('taken');$('ph').textContent='✔ 적치 사진 촬영됨 (데모)';checkDone();}
-function checkDone(){$('doneBtn').disabled=!(pickedLoc&&photo);}
-function finish(){
-  state[cur.id].done=true; updHeader();
-  toast('✔ '+cur.nm+' → '+pickedLoc+' 적치완료');
-  renderList();
-}
+    <!-- (데모) supabase-js CDN 제거 — 백엔드 미연결 -->
+    <script>
+        // ============================================================
+        // 🟢 Supabase 백엔드 연결 (2단계) — 기존 GAS 화면 그대로 재사용
+        //    google.script.run 을 흉내내는 shim 으로 8개 호출부 무수정
+        // ============================================================
+        const SB_TABLE = 'inbound_items';
+        /* ===== 데모용: 실제 Supabase 대신 인메모리 가짜 데이터 (URL·키 없음, 실제 회사 데이터 아님) ===== */
+        const _WORKERS = [
+          {name:'데모작업자', role:'검수', active:true, sort_order:1},
+          {name:'김검수', role:'검수', active:true, sort_order:2},
+          {name:'이적치', role:'적치', active:true, sort_order:3},
+        ];
+        const _R = (o)=>Object.assign({expiry_date:'2027-06-30', special_note:'', location:'', photo_url:'', placed:false, re_placed:false, recommended_location:'', pallet_no:'1'}, o);
+        const _DB = { inbound_items: [
+          _R({id:'r1', ingo_no:'IB-2606-001', customer:'오리무역',   product_name:'미니 텀블러 350ml',  barcode:'8801234500017', quantity:120, lot_no:'L2606A', plt_no:'PLT-2606-011', recommended_location:'A01-03-2-05'}),
+          _R({id:'r2', ingo_no:'IB-2606-001', customer:'오리무역',   product_name:'우드 코스터 4P세트',  barcode:'8801234500048', quantity:150, lot_no:'L2606A', plt_no:'PLT-2606-011', recommended_location:'A01-03-2-05'}),
+          _R({id:'r3', ingo_no:'IB-2606-002', customer:'너구리상사', product_name:'캔버스 에코백 M',    barcode:'8801234500024', quantity:200, lot_no:'L2606B', plt_no:'PLT-2606-012', recommended_location:'A02-01-1-03'}),
+          _R({id:'r4', ingo_no:'IB-2606-003', customer:'판다물산',   product_name:'세라믹 머그 2P',      barcode:'8801234500031', quantity:96,  lot_no:'L2606C', plt_no:'PLT-2606-013', recommended_location:'B01-05-3-02'}),
+          _R({id:'r5', ingo_no:'IB-2606-004', customer:'코알라유통', product_name:'스테인리스 보틀 500', barcode:'8801234500055', quantity:80,  lot_no:'L2606D', plt_no:'PLT-2606-014', recommended_location:'B02-02-2-07', placed:true, location:'B02-02-2-07'}),
+          _R({id:'r6', ingo_no:'IB-2606-005', customer:'여우물류',   product_name:'린넨 앞치마',         barcode:'8801234500062', quantity:60,  lot_no:'L2606E', plt_no:'PLT-2606-015', recommended_location:'C01-04-1-06'}),
+          _R({id:'r7', ingo_no:'IB-2606-006', customer:'너구리상사', product_name:'대나무 도마',         barcode:'8801234500079', quantity:40,  lot_no:'L2606F', plt_no:'PLT-2606-016', recommended_location:'C03-06-2-01'}),
+          _R({id:'r8', ingo_no:'IB-2606-003', customer:'판다물산',   product_name:'아로마 캔들 세트',    barcode:'8801234500086', quantity:72,  lot_no:'L2606C', plt_no:'PLT-2606-013', recommended_location:'B01-05-3-02'}),
+        ], workers: _WORKERS };
+        function _qb(table){
+          let filt = (_DB[table]||[]).slice(); let mode='select', payload=null;
+          const b = {
+            select(){ mode='select'; return b; },
+            update(p){ mode='update'; payload=p; return b; },
+            insert(p){ mode='insert'; payload=p; return b; },
+            upsert(p){ mode='upsert'; payload=p; return b; },
+            eq(c,v){ filt=filt.filter(r=>String(r[c])===String(v)); return b; },
+            ilike(c,pat){ const s=String(pat).replace(/%/g,'').toLowerCase(); filt=filt.filter(r=>String(r[c]==null?'':r[c]).toLowerCase().includes(s)); return b; },
+            in(c,vs){ filt=filt.filter(r=>vs.includes(r[c])); return b; },
+            order(){ return b; }, limit(n){ filt=filt.slice(0,n); return b; },
+            then(res,rej){
+              let out;
+              if(mode==='update'){ filt.forEach(r=>Object.assign(r,payload)); out={data:filt,error:null}; }
+              else if(mode==='insert'||mode==='upsert'){ if(payload){ (_DB[table]=_DB[table]||[]).push(payload); } out={data:payload?[payload]:[],error:null}; }
+              else out={data:filt,error:null};
+              return Promise.resolve(out).then(res,rej);
+            }
+          };
+          return b;
+        }
+        const sb = {
+          auth:{ getSession:async()=>({data:{session:{user:{email:'demo@demo'}}}}),
+                 signInWithPassword:async()=>({data:{session:{}},error:null}) },
+          from:(t)=>_qb(t),
+          rpc:async()=>({data:[],error:null})
+        };
 
-/* init */
-updHeader(); renderList();
-</script>
+        // 🔒 접속 잠금 (공유 계정 1개. 로그인해야 DB 접근 허용 = RLS authenticated)
+        const GATE_EMAIL = 'pda@icheon375.app';
+        async function gateSubmit() {
+            const pw = document.getElementById('gatePw').value.trim();
+            const btn = document.getElementById('gateBtn'), err = document.getElementById('gateErr');
+            if (!pw) { err.textContent = '비밀번호를 입력하세요'; return; }
+            btn.disabled = true; btn.textContent = '확인 중…'; err.textContent = '';
+            const { error } = await sb.auth.signInWithPassword({ email: GATE_EMAIL, password: pw });
+            btn.disabled = false; btn.textContent = '입장';
+            if (error) { err.textContent = '비밀번호가 올바르지 않습니다'; return; }
+            document.getElementById('authGate').style.display = 'none';
+            ensureWorker();
+            _netqFlush();
+        }
+
+        // ============================================================
+        // 👤 작업자 식별 (생산성 추적) — 로그인 후 1회 선택, 모든 적치/수정에 기록
+        //    명단은 workers 테이블(active)에서 로드, 선택값은 localStorage 유지.
+        // ============================================================
+        const WORKER_KEY = 'icheon375_worker';
+        let CURRENT_WORKER = localStorage.getItem(WORKER_KEY) || '';
+        function _renderWorkerChip() {
+            const chip = document.getElementById('workerChip');
+            if (chip) chip.innerHTML = '👤 ' + (CURRENT_WORKER || '작업자 선택')
+                + ' <span style="opacity:.85;font-weight:600;text-decoration:underline;margin-left:10px;">변경</span>';
+        }
+        function ensureWorker() { _renderWorkerChip(); if (!CURRENT_WORKER) openWorkerGate(); }
+        function changeWorker() { openWorkerGate(); }
+        async function openWorkerGate() {
+            const gate = document.getElementById('workerGate'), list = document.getElementById('workerList');
+            gate.style.display = 'flex';
+            list.innerHTML = '<div style="color:#999;font-size:30px;padding:20px;">불러오는 중…</div>';
+            let workers = [];
+            try {
+                // role 컬럼이 아직 없을 수 있으므로(스키마 RUN 전) 실패 시 name만 재조회
+                let r = await sb.from('workers').select('name,role').eq('active', true).order('sort_order').order('name');
+                if (r.error && /role|column|schema cache/i.test(r.error.message)) {
+                    r = await sb.from('workers').select('name').eq('active', true).order('sort_order').order('name');
+                }
+                if (!r.error && r.data) workers = r.data;
+            } catch (e) {}
+            list.innerHTML = '';
+            const staff = workers.filter(w => w.role !== '관리자');
+            const mgrs = workers.filter(w => w.role === '관리자');
+            const addGroup = (title, arr) => {
+                if (!arr.length) return;
+                if (mgrs.length) {   // 두 그룹 다 있을 때만 구분 헤더 표시
+                    const h = document.createElement('div');
+                    h.textContent = title;
+                    h.style.cssText = 'text-align:left;font-size:26px;font-weight:800;color:#888;margin:12px 2px 2px;padding-top:8px;border-top:2px solid #eee;';
+                    list.appendChild(h);
+                }
+                arr.forEach(w => {
+                    const b = document.createElement('button');
+                    b.className = 'worker-pick'; b.textContent = w.name;
+                    b.onclick = () => selectWorker(w.name);
+                    list.appendChild(b);
+                });
+            };
+            addGroup('작업자', staff);
+            addGroup('관리자', mgrs);
+            const manual = document.createElement('button');
+            manual.className = 'worker-pick manual'; manual.textContent = '✏️ 직접 입력';
+            manual.onclick = () => { const v = prompt('작업자 이름을 입력하세요'); if (v && v.trim()) addAndSelectWorker(v.trim()); };
+            list.appendChild(manual);
+        }
+        // 직접입력 → 명단(workers)에 자동 등록(이미 있으면 무시, 새 사람은 맨 아래) 후 선택. 다음부턴 버튼으로 뜸.
+        async function addAndSelectWorker(name) {
+            name = name.trim(); if (!name) return;
+            try { await sb.from('workers').upsert({ name, active: true, sort_order: 9999 }, { onConflict: 'name', ignoreDuplicates: true }); } catch (e) {}
+            selectWorker(name);
+        }
+        function selectWorker(name) {
+            CURRENT_WORKER = name;
+            localStorage.setItem(WORKER_KEY, name);
+            document.getElementById('workerGate').style.display = 'none';
+            _renderWorkerChip();
+        }
+
+        (async () => {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) { document.getElementById('authGate').style.display = 'none'; ensureWorker(); _netqFlush(); }
+        })();
+        // 적치사진 = 별도 GAS 엔드포인트(드라이브 저장) → 반환 URL을 Supabase에 저장 (하이브리드)
+        const PHOTO_ENDPOINT = 'demo://disabled'; // (데모) 실제 엔드포인트 제거
+
+        function _cleanQR(v) { return String(v).trim().replace(/~/g, 'ㅡ'); }
+
+        // 영문 컬럼 → 기존 화면이 쓰는 한글 키로 매핑
+        function _rowToProduct(r) {
+            return {
+                id: r.id,
+                입고번호: r.ingo_no || '',
+                고객사: r.customer || '',
+                품명: r.product_name || '',
+                바코드: r.barcode || '',
+                수량: (r.quantity === null || r.quantity === undefined) ? '' : r.quantity,
+                소비기한: r.expiry_date || '',
+                제조로트: r.lot_no || '',
+                파렛넘버: r.pallet_no || '',
+                특이사항: r.special_note || '',
+                적치로케이션: r.location || '',
+                'PLT.NO': r.plt_no || '',
+                추천적치위치: r.recommended_location || '',
+                적치사진URL: r.photo_url || '',
+                placed: r.placed === true,
+                re_placed: r.re_placed === true,
+                rowNumber: r.id,   // 하위호환(이제 행번호 아님 = uuid)
+                itemId: r.id
+            };
+        }
+
+        // 적치 시 작업자/시각 기록. placed_by/placed_at 컬럼이 아직 없으면(스키마 RUN 전) 자동 폴백.
+        async function _updateRows(ids, patch) {
+            let { error } = await sb.from(SB_TABLE).update(patch).in('id', ids);
+            if (error && /placed_by|placed_at|schema cache|column/i.test(error.message)) {
+                const p2 = Object.assign({}, patch); delete p2.placed_by; delete p2.placed_at;
+                ({ error } = await sb.from(SB_TABLE).update(p2).in('id', ids));
+            }
+            if (error) throw new Error(error.message);
+        }
+
+        const api = {
+            async ping() {
+                const { error } = await sb.from(SB_TABLE).select('id').limit(1);
+                if (error) throw new Error(error.message);
+                return true;
+            },
+
+            // 서버 searchByBarcode 포팅 (다중 고객사/다중 품목 분기 동일)
+            async search(searchValue, _type, selectedCustomer, selectedItemId) {
+                if (!searchValue) return { success: false, message: '검색값이 필요합니다' };
+                selectedCustomer = (selectedCustomer && selectedCustomer !== 'null' && selectedCustomer !== 'undefined') ? String(selectedCustomer).trim() : null;
+                selectedItemId = (selectedItemId && selectedItemId !== 'null' && selectedItemId !== 'undefined') ? String(selectedItemId).trim() : null;
+                const val = _cleanQR(searchValue);
+                const type = detectInputType(val);
+
+                let q = sb.from(SB_TABLE).select('*');
+                if (type === 'pltno') q = q.eq('plt_no', val);
+                else if (type === 'barcode_partial') q = q.ilike('barcode', '%' + val + '%');
+                else q = q.eq('barcode', val);
+                let { data, error } = await q;
+                if (error) throw new Error(error.message);
+
+                // 바코드 정확검색인데 결과 없으면 PLT.NO 로도 폴백(서버 동작 재현)
+                if ((!data || data.length === 0) && type === 'barcode') {
+                    const r2 = await sb.from(SB_TABLE).select('*').eq('plt_no', val);
+                    if (r2.error) throw new Error(r2.error.message);
+                    data = r2.data;
+                }
+                if (!data || data.length === 0) return { success: false, message: '찾을 수 없습니다: ' + searchValue };
+
+                let results = data.map(_rowToProduct);
+
+                if (selectedItemId) {
+                    const one = results.find(it => it.itemId === selectedItemId);
+                    return one ? { success: true, message: '검색 성공', data: [one] }
+                               : { success: false, message: '선택된 항목을 찾을 수 없습니다' };
+                }
+                let filtered = results;
+                if (selectedCustomer) {
+                    filtered = results.filter(it => String(it.고객사 || '').trim() === selectedCustomer);
+                    if (filtered.length === 0) return { success: false, message: '선택된 고객사에서 항목을 찾을 수 없습니다' };
+                }
+                if (filtered.length === 1) return { success: true, message: '검색 성공', data: filtered };
+
+                const groups = {};
+                filtered.forEach(it => { (groups[it.고객사] = groups[it.고객사] || []).push(it); });
+                if (Object.keys(groups).length > 1) {
+                    return {
+                        success: true, multipleCustomers: true,
+                        customers: Object.keys(groups).map(name => ({
+                            name: name, count: groups[name].length,
+                            totalQuantity: groups[name].reduce((s, it) => s + (parseInt(it.수량) || 0), 0)
+                        })),
+                        message: '여러 고객사에서 발견되었습니다'
+                    };
+                }
+                const cname = Object.keys(groups)[0];
+                const items = groups[cname];
+                if (items.length > 1) return { success: true, multipleItems: true, customerName: cname, items: items, message: '같은 고객사 내에서 여러 항목이 발견되었습니다' };
+                return { success: true, message: '검색 성공', data: items };
+            },
+
+            // 적치: PLT.NO 있으면 일괄, 없으면 단일행. 적치 시점에 상태를 3분류로 기록.
+            //  지정완료(as_assigned=true)  = 미적치였고 입력위치가 기존 지정위치와 동일
+            //  미지정완료(as_assigned=false) = 미적치였는데 빈 위치였거나 다른 위치로 변경
+            //  재적치(re_placed=true)      = 이미 적치완료였던 행을 다시 적치(위치 주황표시)
+            async updateLocation(product, newLocation) {
+                const newLoc = String(newLocation == null ? '' : newLocation).trim();
+                const plt = product['PLT.NO'] ? String(product['PLT.NO']).trim() : '';
+                let rows;
+                if (plt) {
+                    const { data, error } = await sb.from(SB_TABLE).select('id,placed,location').eq('plt_no', plt);
+                    if (error) throw new Error(error.message);
+                    if (!data || data.length === 0) return { success: false, message: 'PLT.NO를 찾을 수 없습니다' };
+                    rows = data;
+                } else {
+                    const { data, error } = await sb.from(SB_TABLE).select('id,placed,location').eq('id', product.id);
+                    if (error) throw new Error(error.message);
+                    if (!data || data.length === 0) return { success: false, message: '해당 항목을 찾을 수 없습니다' };
+                    rows = data;
+                }
+                // 위치 비교용 정규화: 보기엔 같은 위치인데 공백/구분자/대소문자 차이로
+                // 지정완료(초록)가 안 잡히는 문제 방지. (저장값은 작업자 입력 그대로 둠)
+                const normLoc = s => String(s == null ? '' : s)
+                    .replace(/\s+/g, '')          // 공백 제거(붙여넣기 시 섞인 앞뒤·중간 공백)
+                    .replace(/[ㅡ~–—]/g, '-')     // 구분자 변형(한글 ㅡ·스캐너 ~·엔/엠 대시) → 하이픈 통일
+                    .toUpperCase();               // 대소문자 무시(l01 = L01)
+                const newLocN = normLoc(newLoc);
+                const sameAssigned = [], freePlace = [], rePlace = [];
+                rows.forEach(r => {
+                    const oldLoc = String(r.location == null ? '' : r.location).trim();
+                    if (r.placed) rePlace.push(r.id);                            // 이미 적치 → 재적치(위치 주황) — 위치 일치 여부 무관
+                    else if (oldLoc && normLoc(oldLoc) === newLocN) sameAssigned.push(r.id); // 지정위치와 동일(공백·구분자·대소문자 무시) → 지정완료(초록)
+                    else freePlace.push(r.id);                                   // 빈위치/다른위치 → 미지정완료(파랑)
+                });
+                // 적치 시점에 작업자(placed_by)·시각(placed_at)·updated_by 함께 기록
+                const placeStamp = { updated_by: CURRENT_WORKER || null, placed_by: CURRENT_WORKER || null, placed_at: new Date().toISOString() };
+                if (sameAssigned.length) await _updateRows(sameAssigned, Object.assign({ location: newLoc, placed: true, as_assigned: true }, placeStamp));
+                if (freePlace.length) await _updateRows(freePlace, Object.assign({ location: newLoc, placed: true, as_assigned: false }, placeStamp));
+                if (rePlace.length) await _updateRows(rePlace, Object.assign({ location: newLoc, re_placed: true, as_assigned: false }, placeStamp));
+                const detail = [];
+                if (sameAssigned.length) detail.push('지정완료 ' + sameAssigned.length);
+                if (freePlace.length) detail.push('미지정완료 ' + freePlace.length);
+                if (rePlace.length) detail.push('재적치 ' + rePlace.length);
+                let msg = plt ? ('PLT.NO "' + plt + '"의 ' + rows.length + '개 항목이 "' + newLoc + '"로 업데이트되었습니다')
+                              : '적치위치가 업데이트되었습니다';
+                if (detail.length) msg += ' (' + detail.join(', ') + ')';
+                return { success: true, message: msg };
+            },
+
+            async updateSpecialNote(product, newNote) {
+                const edited = !!String(newNote == null ? '' : newNote).trim();   // 내용 있으면 PDA수정 표시(비우면 해제)
+                const { error } = await sb.from(SB_TABLE).update({ special_note: newNote, note_edited: edited, updated_by: CURRENT_WORKER || null }).eq('id', product.id);
+                if (error) throw new Error(error.message);
+                return { success: true, message: '특이사항이 업데이트되었습니다' };
+            },
+
+            // 라벨용: 동일 PLT.NO 모든 항목 (서버 getItemsBySamePltNo 포팅)
+            async getItemsBySamePltNo(pltNo) {
+                if (!pltNo) return { success: false, message: 'PLT.NO가 비어있습니다', items: [] };
+                const { data, error } = await sb.from(SB_TABLE).select('customer,barcode,product_name,quantity').eq('plt_no', String(pltNo).trim());
+                if (error) throw new Error(error.message);
+                const items = (data || []).map(r => ({
+                    customer: r.customer || '', barcode: r.barcode || '',
+                    productName: r.product_name || '', quantity: String(r.quantity == null ? 0 : r.quantity)
+                }));
+                const customers = [];
+                items.forEach(it => { if (it.customer && customers.indexOf(it.customer) === -1) customers.push(it.customer); });
+                return {
+                    success: true, pltNo: pltNo, customer: customers[0] || '', customers: customers,
+                    items: items, itemCount: items.length, isMixed: items.length > 1, hasMultipleCustomers: customers.length > 1
+                };
+            },
+
+            // 수량 단순 변경 (분할 아님)
+            async updateQuantity(product, newQuantity) {
+                const oldQty = parseInt(product.수량) || 0;
+                const nq = parseInt(newQuantity);
+                if (nq === oldQty) return { success: false, message: '수량이 동일합니다' };
+                const { error } = await sb.from(SB_TABLE).update({ quantity: nq, updated_by: CURRENT_WORKER || null }).eq('id', product.id);
+                if (error) throw new Error(error.message);
+                const dir = nq > oldQty ? '증가' : '감소';
+                return { success: true, message: '수량이 업데이트되었습니다!\n' + oldQty + 'EA → ' + nq + 'EA (' + dir + ' ' + Math.abs(nq - oldQty) + 'EA)' };
+            },
+
+            // 파레트 분할 — Postgres RPC(트랜잭션) 호출, 원자적
+            async splitPallet(product, quantities) {
+                // p_worker = 분할 실행 작업자 → updated_by 기록 → 이력에 (미상) 대신 작업자 이름 표시
+                const { data, error } = await sb.rpc('split_pallet', { p_id: product.id, p_quantities: quantities, p_worker: CURRENT_WORKER || null });
+                if (error) throw new Error(error.message);
+                const pallets = (data && data.pallets) || [];
+                const info = pallets.map((p, i) => '파레트 ' + (i + 1) + ': ' + p.quantity + 'EA (' + p.plt_no + ')').join('\n');
+                return { success: true, message: quantities.length + '개 파레트로 분할 완료!\n\n' + info };
+            },
+
+            // 적치사진: 별도 GAS 엔드포인트로 드라이브 저장 → 반환 URL을 Supabase에 기록
+            async uploadPhoto(product, imageDataUrl, pltNo, barcode) {
+                const res = await fetch(PHOTO_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CORS 단순요청(프리플라이트 회피)
+                    body: JSON.stringify({ imageDataUrl: imageDataUrl, pltNo: pltNo, barcode: barcode })
+                });
+                const out = await res.json();
+                if (!out || !out.success) return { success: false, message: (out && out.message) || '사진 업로드 실패' };
+                const { error } = await sb.from(SB_TABLE).update({ photo_url: out.url, updated_by: CURRENT_WORKER || null }).eq('id', product.id);
+                if (error) throw new Error('URL 저장 실패: ' + error.message);
+                return { success: true, message: out.message, url: out.url, fileName: out.fileName };
+            }
+        };
+
+        // ============================================================
+        // 📡 PWA / 오프라인 내성 — 앱 셸 캐시(서비스워커) + 통신 재시도 + 오프라인 쓰기 큐
+        //   온라인 동작은 그대로(비파괴). 적치/특이사항/수량만 큐잉(멱등). 분할/사진은 온라인 필요.
+        // ============================================================
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function () {}); }
+
+        function _isNetErr(e) {
+            var m = String(e && (e.message || e));
+            return !navigator.onLine || /failed to fetch|networkerror|network error|load failed|fetch|timeout|ECONN/i.test(m);
+        }
+        async function _withRetry(fn, tries) {
+            tries = tries || 3; var last;
+            for (var i = 0; i < tries; i++) {
+                try { return await fn(); }
+                catch (e) { last = e; if (!_isNetErr(e) || i === tries - 1) throw e; await new Promise(function (r) { setTimeout(r, 700 * (i + 1)); }); }
+            }
+            throw last;
+        }
+
+        var NETQ_KEY = 'icheon375_netq';
+        function _netqGet() { try { return JSON.parse(localStorage.getItem(NETQ_KEY) || '[]'); } catch (e) { return []; } }
+        function _netqSet(a) { localStorage.setItem(NETQ_KEY, JSON.stringify(a)); _renderNet(); }
+        function _netqLen() { return _netqGet().length; }
+        function _netqAdd(item) { var a = _netqGet(); a.push(item); _netqSet(a); }
+        function _renderNet() {
+            var el = document.getElementById('netStatus'); if (!el) return;
+            var n = _netqLen();
+            if (!navigator.onLine) { el.style.display = 'block'; el.style.background = '#d8483f'; el.innerHTML = '📡 오프라인 — 작업은 저장돼요 (전송 대기 ' + n + '건, 복구 시 자동 전송)'; }
+            else if (n > 0) { el.style.display = 'block'; el.style.background = '#e6890a'; el.innerHTML = '🔄 전송 대기 ' + n + '건 — 전송 중…'; }
+            else { el.style.display = 'none'; }
+        }
+        var _flushing = false;
+        async function _netqFlush() {
+            if (_flushing || !navigator.onLine) return;
+            _flushing = true;
+            try {
+                for (; ;) {
+                    var a = _netqGet(); if (!a.length || !navigator.onLine) break;
+                    var item = a[0], prev = CURRENT_WORKER, drop = false;
+                    try {
+                        CURRENT_WORKER = item.worker || CURRENT_WORKER;
+                        if (item.type === 'location') await api.updateLocation(item.product, item.value);
+                        else if (item.type === 'note') await api.updateSpecialNote(item.product, item.value);
+                        else if (item.type === 'quantity') await api.updateQuantity(item.product, item.value);
+                        drop = true;                                  // 성공 → 제거
+                    } catch (e) {
+                        CURRENT_WORKER = prev;
+                        if (_isNetErr(e)) break;                      // 네트워크 → 중단, 전체 유지(다음 복구 때 재시도)
+                        var t = (item.tries || 0) + 1;                // 진짜 데이터 에러 → 카운트
+                        if (t >= 5) { drop = true; }                  // 5회째 → 포기(드롭, 무한루프 방지)
+                        else { var aa = _netqGet(); if (aa[0]) { aa[0].tries = t; _netqSet(aa); } break; }
+                    } finally { CURRENT_WORKER = prev; }
+                    if (drop) { var b = _netqGet(); b.shift(); _netqSet(b); }
+                }
+            } finally { _flushing = false; _renderNet(); }
+        }
+        function _writeOrQueue(type, product, value, s, f) {
+            var replay = { type: type, product: JSON.parse(JSON.stringify(product)), value: value, worker: CURRENT_WORKER, ts: Date.now() };
+            var run = type === 'location' ? function () { return api.updateLocation(product, value); }
+                : type === 'note' ? function () { return api.updateSpecialNote(product, value); }
+                    : function () { return api.updateQuantity(product, value); };
+            if (!navigator.onLine) { _netqAdd(replay); s({ success: true, queued: true, message: '📡 오프라인 저장됨 — 복구 시 자동 전송 (대기 ' + _netqLen() + '건)' }); return; }
+            _withRetry(run).then(s).catch(function (e) {
+                if (_isNetErr(e)) { _netqAdd(replay); s({ success: true, queued: true, message: '📡 통신 불안 — 저장됨, 복구 시 자동 전송 (대기 ' + _netqLen() + '건)' }); }
+                else { f(e.message || e); }
+            });
+        }
+        window.addEventListener('online', function () { _renderNet(); _netqFlush(); });
+        window.addEventListener('offline', _renderNet);
+        _renderNet();
+
+        // google.script.run 흉내 — 매 접근마다 새 핸들러 세트 반환
+        function _makeGasRun() {
+            let s = function () {}, f = function (e) {};
+            const run = {
+                withSuccessHandler(fn) { s = fn || s; return run; },
+                withFailureHandler(fn) { f = fn || f; return run; },
+                testConnection() { _withRetry(function () { return api.ping(); }).then(s).catch(e => f(e.message || e)); },
+                searchByBarcode(v, t, c, i) { _withRetry(function () { return api.search(v, t, c, i); }).then(s).catch(e => f(e.message || e)); },
+                updateLocation(bc, loc) { _writeOrQueue('location', currentProduct, loc, s, f); },
+                updateSpecialNote(bc, note) { _writeOrQueue('note', currentProduct, note, s, f); },
+                getItemsBySamePltNo(plt) { _withRetry(function () { return api.getItemsBySamePltNo(plt); }).then(s).catch(e => f(e.message || e)); },
+                updateQuantityWithSplit(bc, newQty) { _writeOrQueue('quantity', currentProduct, newQty, s, f); },
+                executeMultiSplit(bc, quantities) { if (!navigator.onLine) { f('오프라인에서는 분할을 할 수 없어요. 온라인 후 다시 시도하세요.'); return; } api.splitPallet(currentProduct, quantities).then(s).catch(e => f(e.message || e)); },
+                uploadLocationPhoto(imageDataUrl, pltNo, barcode) { if (!navigator.onLine) { f('오프라인에서는 사진 업로드를 할 수 없어요. 온라인 후 다시 시도하세요.'); return; } api.uploadPhoto(currentProduct, imageDataUrl, pltNo, barcode).then(s).catch(e => f(e.message || e)); }
+            };
+            return run;
+        }
+        window.google = window.google || { script: {} };
+        if (!window.google.script) window.google.script = {};
+        Object.defineProperty(window.google.script, 'run', { get: _makeGasRun, configurable: true });
+
+        let currentBarcode = '';
+        let currentProduct = null;
+        let currentSearchType = '';
+        let currentRowNumber = null;
+        let capturedPhotoData = null;
+        let currentPltItems = []; // v5.4.4: 동일 PLT.NO 항목 캐시 (혼적 라벨 출력용)
+
+        window.onload = function() {
+            var statusEl = document.getElementById('warmupStatus');
+            statusEl.textContent = '⚡ 서버 준비 중...';
+            statusEl.classList.add('show');
+
+            google.script.run
+                .withSuccessHandler(function() { statusEl.classList.remove('show'); })
+                .withFailureHandler(function() { statusEl.classList.remove('show'); })
+                .testConnection();
+
+            document.getElementById('barcodeInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchBarcode();
+            });
+
+            document.getElementById('barcodeInput').addEventListener('input', function(e) {
+                var input = e.target.value.trim();
+                if (input.length > 0) {
+                    var type = detectInputType(input);
+                    e.target.style.borderColor = type === 'pltno' ? '#007bff' : '#28a745';
+                } else {
+                    e.target.style.borderColor = '';
+                }
+            });
+
+            // Auto-hyphen / reformat removed (2026-06-19): the old logic forced location input into the
+            // legacy 3-3-2-0 shape, which mangled scanned location QR values (e.g. L11-26-03-01, the new
+            // zone-bay-level-cell format). Now the raw scanned/typed value is kept as-is; uppercase
+            // normalization is applied only at submit time in updateLocation() to avoid caret jumps.
+        };
+
+        function detectInputType(input) {
+            var cleanInput = input.toString().trim().toUpperCase();
+            if (cleanInput.startsWith('PLT') || cleanInput.startsWith('P-')) return 'pltno';
+            if (cleanInput.includes('-') || cleanInput.includes('\u3161')) return 'pltno';
+            if (cleanInput.length >= 12) return 'barcode';
+            if (cleanInput.length >= 4) return 'barcode_partial';
+            return 'barcode_partial';
+        }
+
+        function searchBarcode(selectedCustomer, selectedItemId) {
+            var input = document.getElementById('barcodeInput').value.trim();
+            var resultCard = document.getElementById('resultCard');
+            var customerSelectCard = document.getElementById('customerSelectCard');
+            var itemSelectCard = document.getElementById('itemSelectCard');
+
+            if (!input) { alert('바코드 또는 PLT.NO를 입력해주세요!'); return; }
+
+            var inputType = detectInputType(input);
+            var typeText = inputType === 'pltno' ? 'PLT.NO' : '바코드';
+            var customer = (selectedCustomer === undefined || selectedCustomer === null || selectedCustomer === '') ? null : selectedCustomer;
+            var itemId = (selectedItemId === undefined || selectedItemId === null || selectedItemId === '') ? null : selectedItemId;
+
+            currentBarcode = input;
+            currentSearchType = inputType;
+
+            resultCard.className = 'result-card show';
+            resultCard.innerHTML = '<div class="loading"><div class="spinner"></div><p>' + typeText + ' 검색 중...</p></div>';
+            customerSelectCard.style.display = 'none';
+            itemSelectCard.style.display = 'none';
+
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (!response) { showError('서버 응답 없음 - 다시 시도해주세요'); document.getElementById('updateSection').style.display = 'none'; return; }
+                    if (response.success && response.multipleCustomers) {
+                        showCustomerSelection(response.customers);
+                        resultCard.style.display = 'none';
+                        itemSelectCard.style.display = 'none';
+                        document.getElementById('updateSection').style.display = 'none';
+                        return;
+                    }
+                    if (response.success && response.multipleItems) {
+                        showItemSelection(response.customerName, response.items);
+                        resultCard.style.display = 'none';
+                        customerSelectCard.style.display = 'none';
+                        document.getElementById('updateSection').style.display = 'none';
+                        return;
+                    }
+                    if (response.success && response.data && response.data.length > 0) {
+                        currentProduct = JSON.parse(JSON.stringify(response.data[0]));
+                        currentRowNumber = response.data[0].rowNumber;
+                        showProductResult(currentProduct, typeText, input);
+                        resultCard.style.display = 'block';
+                        document.getElementById('updateSection').style.display = 'block';
+                        customerSelectCard.style.display = 'none';
+                        itemSelectCard.style.display = 'none';
+                        document.getElementById('quantityInput').value = currentProduct.수량 || '';
+                        showBulkUpdateInfo();
+                        showRecommendLocation();
+                    } else {
+                        showError(response.message || '검색 실패');
+                        document.getElementById('updateSection').style.display = 'none';
+                        customerSelectCard.style.display = 'none';
+                        itemSelectCard.style.display = 'none';
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    showError('서버 연결 실패: ' + error);
+                    document.getElementById('updateSection').style.display = 'none';
+                    customerSelectCard.style.display = 'none';
+                    itemSelectCard.style.display = 'none';
+                })
+                .searchByBarcode(input, 'auto', customer, itemId);
+        }
+
+        function showBulkUpdateInfo() {
+            var bulkUpdateInfo = document.getElementById('bulkUpdateInfo');
+            var bulkUpdateMessage = document.getElementById('bulkUpdateMessage');
+            if (currentProduct && currentProduct['PLT.NO']) {
+                bulkUpdateInfo.style.display = 'block';
+                bulkUpdateMessage.innerHTML = 'PLT.NO "<strong>' + currentProduct['PLT.NO'] + '</strong>"를 사용하는 모든 항목들이 함께 업데이트됩니다.';
+            } else {
+                bulkUpdateInfo.style.display = 'none';
+            }
+        }
+
+        function showRecommendLocation() {
+            var recommendBox = document.getElementById('recommendLocationBox');
+            var recommendValue = document.getElementById('recommendLocationValue');
+            if (currentProduct && currentProduct.추천적치위치 && currentProduct.추천적치위치.trim() !== '') {
+                recommendBox.style.display = 'block';
+                recommendValue.textContent = currentProduct.추천적치위치;
+            } else {
+                recommendBox.style.display = 'none';
+                recommendValue.textContent = '-';
+            }
+        }
+
+        function showCustomerSelection(customers) {
+            var customerSelectCard = document.getElementById('customerSelectCard');
+            var customerList = document.getElementById('customerList');
+            customerList.innerHTML = '';
+            customers.forEach(function(customer) {
+                var btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.style.margin = '10px 0';
+                btn.style.background = 'linear-gradient(45deg, #007bff, #0056b3)';
+                btn.innerHTML = '<span style="font-size: 35px; display: block; margin-bottom: 10px;">🏢 ' + customer.name + '</span><span style="font-size: 28px; display: block; opacity: 0.9;">파레트: ' + customer.count + '개 | 총 수량: ' + customer.totalQuantity + 'EA</span>';
+                btn.onclick = function() { searchBarcode(customer.name, null); };
+                customerList.appendChild(btn);
+            });
+            customerSelectCard.style.display = 'block';
+            customerSelectCard.className = 'result-card show';
+        }
+
+        function showItemSelection(customerName, items) {
+            var itemSelectCard = document.getElementById('itemSelectCard');
+            var itemList = document.getElementById('itemList');
+            document.getElementById('selectedCustomerName').textContent = customerName;
+            itemList.innerHTML = '';
+            items.forEach(function(item) {
+                var btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.style.margin = '20px 0';
+                btn.style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+                btn.style.textAlign = 'left';
+                btn.style.padding = '40px';
+                btn.innerHTML = '<table style="width: 100%; border-collapse: collapse; color: white;"><tr><td colspan="2" style="font-size: 32px; font-weight: bold; padding: 10px 0;">📋 ' + (item.품명 || '상품명 없음') + '</td></tr><tr><td style="font-size: 48px; opacity: 0.9; padding: 10px 0;">📅 ' + (item.소비기한 || '-') + '</td><td style="font-size: 48px; opacity: 0.9; padding: 10px 0; text-align: right;">🏷️ ' + (item.제조로트 || '-') + '</td></tr><tr><td style="font-size: 48px; opacity: 0.9; padding: 10px 0;">📦 ' + (item.수량 || '-') + 'EA</td><td style="font-size: 48px; opacity: 0.9; padding: 10px 0; text-align: right;">🎯 ' + (item.파렛넘버 || '-') + '</td></tr></table>';
+                btn.onclick = function() { searchBarcode(customerName, item.itemId); };
+                itemList.appendChild(btn);
+            });
+            var backBtn = document.createElement('button');
+            backBtn.className = 'btn';
+            backBtn.style.background = '#6c757d';
+            backBtn.innerHTML = '<span>⬅️</span> 다시 검색';
+            backBtn.onclick = function() { itemSelectCard.style.display = 'none'; document.getElementById('barcodeInput').focus(); };
+            itemList.appendChild(backBtn);
+            itemSelectCard.style.display = 'block';
+            itemSelectCard.className = 'result-card show';
+        }
+
+        function showProductResult(product, searchType, originalInput) {
+            var resultCard = document.getElementById('resultCard');
+            resultCard.className = 'result-card show success';
+            var fields = [
+                { label: '입고번호', key: '입고번호' },
+                { label: '고객사', key: '고객사' },
+                { label: '품명', key: '품명' },
+                { label: '바코드', key: '바코드' },
+                { label: '수량', key: '수량' },
+                { label: '소비기한', key: '소비기한' },
+                { label: '제조로트', key: '제조로트' },
+                { label: '파렛넘버', key: '파렛넘버' },
+                { label: '특이사항', key: '특이사항' },
+                { label: '적치위치', key: '적치로케이션' },
+                { label: 'PLT.NO', key: 'PLT.NO' }
+            ];
+            var html = '<div class="result-header"><span class="result-icon">✅</span><span class="result-title">' + searchType + ' 검색 성공</span></div>';
+            html += '<div class="product-info">';
+            fields.forEach(function(field) {
+                var value = product[field.key] || (field.key === '적치로케이션' ? '미배치' : '-');
+                html += '<div class="info-row"><span class="info-label">' + field.label + '</span><span class="info-value">' + value + '</span></div>';
+            });
+            if (product.적치사진URL && product.적치사진URL.trim() !== '') {
+                html += '<div class="info-row"><span class="info-label">적치사진</span><span class="info-value"><a href="' + product.적치사진URL + '" target="_blank" class="photo-link"><span>📷</span> 사진 보기</a></span></div>';
+            }
+            html += '</div>';
+            resultCard.innerHTML = html;
+            document.getElementById('locationInput').value = product.적치로케이션 || '';
+            document.getElementById('noteInput').value = product.특이사항 || '';
+            document.getElementById('quantityInput').value = product.수량 || '';
+        }
+
+        function showError(message) {
+            var resultCard = document.getElementById('resultCard');
+            resultCard.className = 'result-card show error';
+            resultCard.innerHTML = '<div class="result-header"><span class="result-icon">❌</span><span class="result-title">검색 실패</span></div><div style="padding: 15px; text-align: center;">' + message + '</div>';
+        }
+
+        function getIdentifiers() {
+            return {
+                pltNo: currentProduct ? (currentProduct['PLT.NO'] || '') : '',
+                barcode: currentProduct ? (currentProduct.바코드 || '') : '',
+                customer: currentProduct ? (currentProduct.고객사 || '') : '',
+                ingoNo: currentProduct ? (currentProduct.입고번호 || '') : ''
+            };
+        }
+
+        function captureLocationPhoto() {
+            if (!currentProduct) { alert('먼저 바코드를 검색하세요'); return; }
+            if (!currentProduct['PLT.NO']) { alert('PLT.NO가 없는 항목입니다'); return; }
+            document.getElementById('photoFileInput').click();
+        }
+
+        function handlePhotoCapture(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                capturedPhotoData = e.target.result;
+                document.getElementById('photoPreviewImg').src = capturedPhotoData;
+                document.getElementById('photoPreview').className = 'photo-preview show';
+                document.getElementById('photoBtn').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function retakePhoto() {
+            capturedPhotoData = null;
+            document.getElementById('photoPreview').className = 'photo-preview';
+            document.getElementById('photoFileInput').value = '';
+            document.getElementById('photoBtn').style.display = 'flex';
+        }
+
+        function uploadPhoto() {
+            if (!capturedPhotoData) { alert('촬영된 사진이 없습니다'); return; }
+            if (!currentProduct || !currentProduct['PLT.NO'] || !currentProduct.바코드) { alert('PLT.NO와 바코드 정보가 필요합니다'); return; }
+            var uploadBtn = event.target;
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span>⏳</span> 업로드 중...';
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<span>✅</span> 사진 저장';
+                    if (response && response.success) {
+                        alert('✅ ' + response.message + '\n파일명: ' + response.fileName);
+                        retakePhoto();
+                        currentProduct.적치사진URL = response.url;
+                        showProductResult(currentProduct, currentSearchType === 'pltno' ? 'PLT.NO' : '바코드', currentBarcode);
+                    } else {
+                        alert('❌ ' + (response ? response.message : '업로드 실패'));
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    alert('❌ 업로드 실패: ' + error);
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<span>✅</span> 사진 저장';
+                })
+                .uploadLocationPhoto(capturedPhotoData, currentProduct['PLT.NO'], currentProduct.바코드, currentRowNumber, getIdentifiers());
+        }
+
+        function updateQuantity() {
+            var newQuantity = parseInt(document.getElementById('quantityInput').value);
+            if (!currentBarcode) { alert('먼저 바코드 또는 PLT.NO를 검색하세요'); return; }
+            if (!currentProduct) { alert('제품 정보가 없습니다. 다시 검색해주세요'); return; }
+            if (!newQuantity || newQuantity < 1) { alert('올바른 수량을 입력하세요'); return; }
+            var currentQuantity = currentProduct ? parseInt(currentProduct.수량) : 0;
+            if (newQuantity === currentQuantity) { alert('현재 수량과 동일합니다.'); return; }
+            var changeType = newQuantity > currentQuantity ? '증가' : '감소';
+            if (!confirm('수량을 업데이트하시겠습니까?\n\n현재: ' + currentQuantity + 'EA\n변경: ' + newQuantity + 'EA\n(' + changeType + ': ' + Math.abs(newQuantity - currentQuantity) + 'EA)')) return;
+            var btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span> 처리 중...';
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>📦</span> 수량 업데이트';
+                    if (response && response.success) {
+                        alert('✅ ' + response.message);
+                        currentProduct.수량 = newQuantity;
+                        showProductResult(currentProduct, currentSearchType === 'pltno' ? 'PLT.NO' : '바코드', currentBarcode);
+                        document.getElementById('quantityInput').value = newQuantity;
+                    } else {
+                        alert('❌ ' + (response ? response.message : '업데이트 실패'));
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    alert('❌ 업데이트 실패: ' + error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>📦</span> 수량 업데이트';
+                })
+                .updateQuantityWithSplit(currentBarcode, newQuantity, currentRowNumber, getIdentifiers());
+        }
+
+        function updateLocation() {
+            var newLocation = document.getElementById('locationInput').value.trim().toUpperCase();
+            if (!currentBarcode) { alert('먼저 바코드 또는 PLT.NO를 검색하세요'); return; }
+            if (!currentProduct) { alert('제품 정보가 없습니다. 다시 검색해주세요'); return; }
+            if (!newLocation) { alert('적치위치를 입력하세요'); return; }
+            if (currentProduct && currentProduct['PLT.NO']) {
+                if (!confirm('PLT.NO "' + currentProduct['PLT.NO'] + '"의 모든 항목이 "' + newLocation + '"로 업데이트됩니다.\n\n계속하시겠습니까?')) return;
+            }
+            var btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span> 처리 중...';
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>📍</span> 위치 업데이트 (PLT.NO 일괄적용)';
+                    if (response && response.success) {
+                        alert('✅ ' + response.message);
+                        currentProduct.적치로케이션 = newLocation;
+                        showProductResult(currentProduct, currentSearchType === 'pltno' ? 'PLT.NO' : '바코드', currentBarcode);
+                        document.getElementById('locationInput').value = newLocation;
+                    } else {
+                        alert('❌ ' + (response ? response.message : '업데이트 실패'));
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    alert('❌ 업데이트 실패: ' + error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>📍</span> 위치 업데이트 (PLT.NO 일괄적용)';
+                })
+                .updateLocation(currentBarcode, newLocation, currentRowNumber, getIdentifiers());
+        }
+
+        function updateNote() {
+            var newNote = document.getElementById('noteInput').value.trim();
+            if (!currentBarcode) { alert('먼저 바코드 또는 PLT.NO를 검색하세요'); return; }
+            if (!currentProduct) { alert('제품 정보가 없습니다. 다시 검색해주세요'); return; }
+            var btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span> 처리 중...';
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>📝</span> 특이사항 업데이트';
+                    if (response && response.success) {
+                        alert('✅ ' + response.message);
+                        currentProduct.특이사항 = newNote;
+                        showProductResult(currentProduct, currentSearchType === 'pltno' ? 'PLT.NO' : '바코드', currentBarcode);
+                        document.getElementById('noteInput').value = newNote;
+                    } else {
+                        alert('❌ ' + (response ? response.message : '업데이트 실패'));
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    alert('❌ 업데이트 실패: ' + error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>📝</span> 특이사항 업데이트';
+                })
+                .updateSpecialNote(currentProduct['바코드'] || currentBarcode, newNote, currentRowNumber, getIdentifiers());
+        }
+
+        function setLocation(location) {
+            document.getElementById('locationInput').value = location;
+        }
+
+        function handleNoteSelection() {
+            var dropdown = document.getElementById('noteDropdown');
+            var noteInput = document.getElementById('noteInput');
+            var damageDiv = document.getElementById('damageQuantityDiv');
+            var selectedValue = dropdown.value;
+            damageDiv.style.display = 'none';
+            document.getElementById('damageQuantity').value = '';
+            switch(selectedValue) {
+                case '벌크': noteInput.value = '벌크'; break;
+                case '바코드 미검수': noteInput.value = '바코드 미검수'; break;
+                case '파손': noteInput.value = '파손'; damageDiv.style.display = 'block'; break;
+                case '실셈': noteInput.value = '실셈'; damageDiv.style.display = 'block'; break;
+                case '직접입력': noteInput.value = ''; noteInput.focus(); break;
+            }
+        }
+
+        function updateDamageNote() {
+            var quantity = document.getElementById('damageQuantity').value;
+            var noteInput = document.getElementById('noteInput');
+            var selectedType = document.getElementById('noteDropdown').value;
+            if (quantity && quantity > 0) noteInput.value = selectedType + ' ' + quantity + '개';
+        }
+
+        function openMultiSplit() {
+            if (!currentProduct) { alert('먼저 제품을 검색하세요'); return; }
+            document.getElementById('currentQtyDisplay').textContent = currentProduct.수량 || '0';
+            document.getElementById('multiSplitSection').style.display = 'block';
+            document.getElementById('splitInputs').innerHTML = '';
+            addSplitInput();
+            addSplitInput();
+            document.getElementById('multiSplitSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function addSplitInput() {
+            var container = document.getElementById('splitInputs');
+            var index = container.children.length + 1;
+            var div = document.createElement('div');
+            div.style.marginBottom = '15px';
+            div.innerHTML = '<label style="font-size: 30px; color: #495057; margin-right: 15px;">파레트 ' + index + ':</label><input type="number" class="split-quantity-input" placeholder="수량" min="1" onchange="updateSplitTotal()" style="width: 40%; padding: 20px; border: 4px solid #dee2e6; border-radius: 10px; font-size: 35px;"><button onclick="removeSplitInput(this)" style="background: #dc3545; color: white; border: none; border-radius: 10px; padding: 15px 25px; margin-left: 10px; cursor: pointer; font-size: 30px;">삭제</button>';
+            container.appendChild(div);
+            updateSplitTotal();
+        }
+
+        function removeSplitInput(button) {
+            var container = document.getElementById('splitInputs');
+            if (container.children.length > 2) {
+                button.parentElement.remove();
+                Array.from(container.children).forEach(function(div, index) {
+                    div.querySelector('label').textContent = '파레트 ' + (index + 1) + ':';
+                });
+                updateSplitTotal();
+            } else {
+                alert('최소 2개의 파레트가 필요합니다');
+            }
+        }
+
+        function applyTemplate(quantities) {
+            var container = document.getElementById('splitInputs');
+            container.innerHTML = '';
+            quantities.forEach(function() { addSplitInput(); });
+            var inputs = container.querySelectorAll('.split-quantity-input');
+            quantities.forEach(function(qty, index) { if (inputs[index]) inputs[index].value = qty; });
+            updateSplitTotal();
+        }
+
+        function updateSplitTotal() {
+            var inputs = document.querySelectorAll('.split-quantity-input');
+            var total = 0;
+            inputs.forEach(function(input) { total += parseInt(input.value) || 0; });
+            var currentQty = parseInt(currentProduct.수량) || 0;
+            var totalDisplay = document.getElementById('splitTotalDisplay');
+            var validation = document.getElementById('splitValidation');
+            totalDisplay.textContent = total;
+            if (total === currentQty) {
+                totalDisplay.style.color = '#28a745';
+                validation.innerHTML = '<span style="color: #28a745; font-weight: bold;">✅ 올바른 분할</span>';
+            } else if (total < currentQty) {
+                totalDisplay.style.color = '#ffc107';
+                validation.innerHTML = '<span style="color: #ffc107; font-weight: bold;">⚠️ ' + (currentQty - total) + 'EA 부족</span>';
+            } else {
+                totalDisplay.style.color = '#dc3545';
+                validation.innerHTML = '<span style="color: #dc3545; font-weight: bold;">❌ ' + (total - currentQty) + 'EA 초과</span>';
+            }
+        }
+
+        function executeMultiSplit() {
+            var inputs = document.querySelectorAll('.split-quantity-input');
+            var quantities = [];
+            var total = 0;
+            inputs.forEach(function(input) {
+                var value = parseInt(input.value) || 0;
+                if (value > 0) { quantities.push(value); total += value; }
+            });
+            var currentQty = parseInt(currentProduct.수량) || 0;
+            if (quantities.length < 2) { alert('최소 2개의 파레트로 분할해야 합니다'); return; }
+            if (total !== currentQty) { alert('분할 수량 합계가 현재 수량과 일치해야 합니다!\n현재: ' + currentQty + 'EA\n입력: ' + total + 'EA'); return; }
+            if (!confirm(quantities.length + '개 파레트로 분할하시겠습니까?\n\n' + quantities.map(function(qty, idx) { return '파레트 ' + (idx + 1) + ': ' + qty + 'EA'; }).join('\n'))) return;
+            var btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳</span> 분할 처리 중...';
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    if (response && response.success) {
+                        alert('✅ ' + response.message);
+                        cancelMultiSplit();
+                        searchBarcode();
+                    } else {
+                        alert('❌ ' + (response ? response.message : '분할 실패'));
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>✅</span> 분할 실행';
+                })
+                .withFailureHandler(function(error) {
+                    alert('❌ 분할 실패: ' + error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>✅</span> 분할 실행';
+                })
+                .executeMultiSplit(currentBarcode, quantities, currentRowNumber, getIdentifiers());
+        }
+
+        function cancelMultiSplit() {
+            document.getElementById('multiSplitSection').style.display = 'none';
+            document.getElementById('splitInputs').innerHTML = '';
+        }
+
+        // ============================================================
+        // v5.4.5: 라벨 출력 (혼적 + 다중 고객사 지원)
+        // ============================================================
+
+        function openLabelPreview() {
+            if (!currentProduct) { alert('먼저 바코드 또는 PLT.NO를 검색하세요'); return; }
+            if (!currentProduct['PLT.NO']) { alert('PLT.NO가 없는 항목입니다'); return; }
+
+            var pltNo = currentProduct['PLT.NO'];
+            var labelPrintBtn = document.getElementById('labelPrintBtn');
+            labelPrintBtn.disabled = true;
+            labelPrintBtn.innerHTML = '<span>⏳</span> 조회 중...';
+
+            // 같은 PLT.NO를 가진 모든 항목 서버에서 조회 (TextFinder 최적화)
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    labelPrintBtn.disabled = false;
+                    labelPrintBtn.innerHTML = '<span>🖨️</span> 라벨 출력';
+
+                    if (!response || !response.success) {
+                        alert('항목 조회 실패: ' + (response ? response.message : '응답 없음'));
+                        return;
+                    }
+
+                    currentPltItems = response.items || [];
+                    renderLabelPreview(pltNo, response);
+                    document.getElementById('labelPreviewSection').style.display = 'block';
+                })
+                .withFailureHandler(function(error) {
+                    labelPrintBtn.disabled = false;
+                    labelPrintBtn.innerHTML = '<span>🖨️</span> 라벨 출력';
+                    alert('조회 실패: ' + error);
+                })
+                .getItemsBySamePltNo(pltNo);
+        }
+
+        function renderLabelPreview(pltNo, response) {
+            var items = response.items || [];
+            var customers = response.customers || [];
+            var isMixed = response.isMixed === true;
+            var hasMultipleCustomers = response.hasMultipleCustomers === true;
+
+            document.getElementById('previewPltNo').textContent = pltNo;
+
+            // 헤더 - 고객사 표시
+            var custEl = document.getElementById('previewCustomer');
+            if (hasMultipleCustomers) {
+                custEl.textContent = '🏢 ' + customers.length + '개 고객사 혼적';
+                custEl.style.fontSize = '18px';
+                custEl.style.color = '#d84315';
+            } else {
+                custEl.textContent = response.customer || '';
+                custEl.style.fontSize = '22px';
+                custEl.style.color = '#333';
+            }
+
+            // 혼적/단일 배지
+            var mixedBadge = document.getElementById('previewMixedBadge');
+            if (isMixed) {
+                var badgeText = '🔀 혼적 ' + items.length + '건';
+                if (hasMultipleCustomers) badgeText += ' · 다중 고객사';
+                mixedBadge.textContent = badgeText;
+                mixedBadge.style.color = '#e91e63';
+                mixedBadge.style.fontWeight = '700';
+            } else {
+                mixedBadge.textContent = items.length > 0 ? items[0].productName : '';
+                mixedBadge.style.color = '#666';
+                mixedBadge.style.fontWeight = '400';
+            }
+
+            // QR 영역
+            document.getElementById('previewQrArea').innerHTML =
+                '<span style="font-size:12px; color:#555; font-weight:600;">QR: ' + pltNo + '</span>';
+
+            // 바코드-수량 행 렌더링
+            var listEl = document.getElementById('previewItemsList');
+            listEl.innerHTML = '';
+
+            if (items.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; color:#999;">항목 없음</div>';
+                return;
+            }
+
+            // 단일/다중 고객사 구분 없이 바코드+수량 평면 리스트
+            // 혼적이면 행마다 번호 표시 (1. 2. 3.)
+            items.forEach(function(item, idx) {
+                listEl.appendChild(makeItemRow(item, idx + 1, isMixed));
+            });
+        }
+
+        function makeItemRow(item, idx, showIndex) {
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px dashed #ddd;';
+
+            var nameText = item.productName.length > 12 ? item.productName.substring(0, 12) + '…' : item.productName;
+
+            row.innerHTML =
+                '<span style="flex:1; font-size:12px; color:#666; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' +
+                (showIndex ? idx + '. ' : '') + nameText +
+                '</span>' +
+                '<span style="font-size:13px; font-weight:700; color:#1a1a1a; margin-left:8px;">' +
+                item.barcode +
+                '</span>' +
+                '<span style="font-size:13px; font-weight:900; color:#e91e63; margin-left:10px; min-width:55px; text-align:right;">' +
+                item.quantity + 'EA' +
+                '</span>';
+            return row;
+        }
+
+        function closeLabelPreview() {
+            document.getElementById('labelPreviewSection').style.display = 'none';
+        }
+
+        function launchSewooLabel() {
+            if (!currentProduct || !currentProduct['PLT.NO']) {
+                alert('PLT.NO가 없는 항목입니다');
+                return;
+            }
+            if (!currentPltItems || currentPltItems.length === 0) {
+                alert('출력할 항목이 없습니다. 라벨 출력 버튼을 먼저 눌러주세요.');
+                return;
+            }
+
+            var pltNo = currentProduct['PLT.NO'];
+            var isMixed = currentPltItems.length > 1;
+
+            // 고유 고객사 목록 계산 (입력 순서 유지)
+            var customerSet = {};
+            var customersList = [];
+            currentPltItems.forEach(function(item) {
+                var c = item.customer || '';
+                if (c && !customerSet[c]) {
+                    customerSet[c] = true;
+                    customersList.push(c);
+                }
+            });
+            var hasMultipleCustomers = customersList.length > 1;
+            var primaryCustomer = customersList[0] || currentProduct['고객사'] || '';
+
+            // 모든 항목을 JSON 배열로 직렬화 (각 item에 customer 포함)
+            // 형식: [{c:고객사, b:바코드, n:품명, q:수량}, ...]
+            var itemsArray = currentPltItems.map(function(item) {
+                return {
+                    c: item.customer || primaryCustomer,
+                    b: item.barcode,
+                    n: item.productName,
+                    q: item.quantity
+                };
+            });
+            var itemsJson = JSON.stringify(itemsArray);
+
+            var p = new URLSearchParams({
+                pltno:         pltNo,
+                customer:      primaryCustomer,                      // 첫 번째 고객사 (단일 표시용)
+                customers:     customersList.join('|'),              // 🆕 모든 고객사 (| 구분)
+                multiCustomer: hasMultipleCustomers ? '1' : '0',     // 🆕 다중 고객사 플래그
+                mixed:         isMixed ? '1' : '0',
+                count:         String(currentPltItems.length),
+                items:         itemsJson,
+                // 하위호환용 (단일 항목 파라미터)
+                barcode:       currentPltItems[0].barcode || '',
+                name:          currentPltItems[0].productName || '',
+                qty:           String(currentPltItems[0].quantity || '')
+            });
+
+            var intentUrl = 'intent://print?' + p.toString() + '#Intent;scheme=sewoolabel;package=com.sewoolabel;end';
+            window.open(intentUrl, '_blank');
+        }
+
+        /* ===== 데모 자동 진입 & 외부호출 차단 ===== */
+        try{ localStorage.setItem(WORKER_KEY, '데모작업자'); }catch(e){}
+        CURRENT_WORKER = '데모작업자';
+        api.uploadPhoto = async function(product){
+            if(product) product.적치사진URL = 'demo://photo';
+            var row = _DB.inbound_items.find(function(r){ return r.id === (product && product.id); });
+            if(row) row.photo_url = 'demo://photo';
+            return { success:true, message:'적치사진 업로드 완료 (데모)', url:'demo://photo', fileName:'demo.jpg' };
+        };
+        api.splitPallet = async function(product, quantities){
+            return { success:true, message:(quantities?quantities.length:0)+'개 파레트로 분할 완료 (데모)' };
+        };
+        window.addEventListener('load', function(){ setTimeout(function(){ try{
+            var ag=document.getElementById('authGate'); if(ag) ag.style.display='none';
+            var wg=document.getElementById('workerGate'); if(wg) wg.style.display='none';
+            if(typeof _renderWorkerChip==='function') _renderWorkerChip();
+            var i=document.getElementById('barcodeInput'); if(i){ i.value='8801234500017'; if(typeof searchBarcode==='function') searchBarcode(); }
+        }catch(e){ console.warn('demo init', e); } }, 300); });
+    </script>
 </body>
 </html>
