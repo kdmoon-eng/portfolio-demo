@@ -5,13 +5,10 @@
 <base target="_top">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>PDA 출고 작업</title>
-<!-- PWA: 홈 화면에 추가하면 standalone(독립 앱)으로 실행 → 커스텀 탭 회피, 라벨앱 인텐트 정상 동작 -->
-<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#7c3aed">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="B2B 출고">
-<link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
@@ -1358,7 +1355,7 @@ function _ensureGate() {
     '<div style="color:#777;font-size:13px;margin-bottom:6px">센터를 선택하세요</div>' +
     '<div class="sbCenters" id="sbCenters">' +
       '<button type="button" class="sbCbtn" data-email="icheon375@b2bpda.app" onclick="sbPickCenter(this)">이천375<span class="s">음성</span></button>' +
-      '<button type="button" class="sbCbtn admin" data-email="kd.moon@dohands.com" onclick="sbPickCenter(this)">👑 전체 관리자<span class="s">모든 센터</span></button>' +
+      '<button type="button" class="sbCbtn admin" data-email="admin@demo.example" onclick="sbPickCenter(this)">👑 전체 관리자<span class="s">모든 센터</span></button>' +
     '</div>' +
     '<input id="sbPw" type="password" placeholder="비밀번호" autocomplete="current-password" style="padding:13px;width:min(300px,80vw);border:1px solid #ccc;border-radius:10px;font-size:15px">' +
     '<button id="sbLoginBtn" onclick="sbLogin()" style="padding:13px 44px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700">로그인</button>' +
@@ -1411,7 +1408,7 @@ async function afterAuth(){
   if (CURRENT_WORKER) { var n=document.getElementById('wkName'); if(n) n.textContent=CURRENT_WORKER; init(); }
   else { await showWorkerGate(); }
 }
-var SUPER_ADMIN_EMAIL = 'kd.moon@dohands.com';   // 이 계정으로 로그인했을 때만 작업자 삭제 가능(문기동)
+var SUPER_ADMIN_EMAIL = 'admin@demo.example';   // 이 계정으로 로그인했을 때만 작업자 삭제 가능(문기동)
 var SUPER_ADMIN_NAME  = '문기동';                 // (참고용) 전체 관리자 이름 — 이제 삭제 차단 안 함(마지막 관리자만 보호)
 function _ensureWorkerGate(){
   if (document.getElementById('sbWorkerGate')) return;

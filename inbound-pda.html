@@ -8,12 +8,10 @@
          그 결과 ~980px 기본 폭 → @media(min-width:768px) 데스크톱 규칙 적용 → 화면에 맞게 자동 축소되어 "딱 맞게" 보였음.
          device-width viewport를 넣으면 모바일 거대 글씨(80px) 규칙이 적용되어 PDA에서 너무 크게 나옴. -->
     <title>창고관리 PDA 시스템</title>
-    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#667eea">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="이천375 검수">
-    <link rel="apple-touch-icon" href="/icon-192.png">
     <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Roboto', 'Noto Sans KR', sans-serif; background: white; min-height: 100vh; padding: 0; color: #333; }
@@ -697,7 +695,7 @@
         // 📡 PWA / 오프라인 내성 — 앱 셸 캐시(서비스워커) + 통신 재시도 + 오프라인 쓰기 큐
         //   온라인 동작은 그대로(비파괴). 적치/특이사항/수량만 큐잉(멱등). 분할/사진은 온라인 필요.
         // ============================================================
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function () {}); }
+        /* 데모: 서비스워커(sw.js) 등록 비활성화 — 데모 폴더엔 sw.js가 없어 404를 유발하므로 제거 */
 
         function _isNetErr(e) {
             var m = String(e && (e.message || e));
@@ -1464,6 +1462,10 @@
         };
         api.splitPallet = async function(product, quantities){
             return { success:true, message:(quantities?quantities.length:0)+'개 파레트로 분할 완료 (데모)' };
+        };
+        /* 데모: 라벨 인쇄는 안드로이드 앱(intent://) 호출이라 데모에서 막다른 길이 되므로 안내로 대체 */
+        window.launchSewooLabel = function(){
+            alert('🖨 데모: 라벨 출력\n실제 환경에서는 SewooLabel 앱으로 블루투스 인쇄됩니다.');
         };
         window.addEventListener('load', function(){ setTimeout(function(){ try{
             var ag=document.getElementById('authGate'); if(ag) ag.style.display='none';
